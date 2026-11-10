@@ -44,6 +44,34 @@ export function AuthProvider(props) {
     });
   }
 
+  // ============================================================================
+  // SIGN UP NEW CUSTOMER explained in Vanilla JS:
+  // In Vanilla JS:
+  //   window.appState.user = { name, initials, role: 'customer' };
+  //   updateHeaderDOM();
+  // In React:
+  //   Calling setUser(...) causes all components listening to AuthContext to re-render.
+  // ============================================================================
+  function signupCustomer(name, phone) {
+    let customerInitials = 'NC';
+    if (name && name.trim().length > 0) {
+      const parts = name.trim().split(' ');
+      if (parts.length >= 2) {
+        customerInitials = (parts[0][0] + parts[1][0]).toUpperCase();
+      } else {
+        customerInitials = parts[0].substring(0, 2).toUpperCase();
+      }
+    }
+
+    setUser({
+      name: name && name.trim().length > 0 ? name.trim() : 'New Customer',
+      initials: customerInitials,
+      phone: phone ? phone : '917 000 0000',
+      role: ROLES.CUSTOMER,
+      location: 'Central Mall Hub',
+    });
+  }
+
   // Resets user state back to null (triggers App.jsx to show LoginView)
   function logout() {
     setUser(null);
@@ -74,6 +102,7 @@ export function AuthProvider(props) {
     activeOrder: activeOrder,
     loginAsGuest: loginAsGuest,
     loginAsCustomer: loginAsCustomer,
+    signupCustomer: signupCustomer,
     logout: logout,
     createOrder: createOrder,
   };
