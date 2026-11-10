@@ -63,10 +63,20 @@ export function AuthProvider(props) {
       }
     }
 
+    let customerName = 'New Customer';
+    if (name && name.trim().length > 0) {
+      customerName = name.trim();
+    }
+
+    let customerPhone = '917 000 0000';
+    if (phone && phone.trim().length > 0) {
+      customerPhone = phone.trim();
+    }
+
     setUser({
-      name: name && name.trim().length > 0 ? name.trim() : 'New Customer',
+      name: customerName,
       initials: customerInitials,
-      phone: phone ? phone : '917 000 0000',
+      phone: customerPhone,
       role: ROLES.CUSTOMER,
       location: 'Central Mall Hub',
     });
@@ -80,18 +90,62 @@ export function AuthProvider(props) {
 
   // Creates an active order after the customer unlocks a locker
   function createOrder(orderData) {
+    let size = 'Medium (Max 7kg)';
+    if (orderData && orderData.loadSize) {
+      size = orderData.loadSize;
+    }
+
+    let estimatedKg = 5.2;
+    let estimatedPrice = 337.00;
+
+    if (size.indexOf('Small') !== -1) {
+      estimatedKg = 4.0;
+      estimatedPrice = 260.00;
+    } else if (size.indexOf('Large') !== -1) {
+      estimatedKg = 8.5;
+      estimatedPrice = 552.00;
+    }
+
+    let lockerNumber = '03';
+    if (orderData && orderData.lockerNumber) {
+      lockerNumber = orderData.lockerNumber;
+    }
+
+    let serviceType = 'Wash, Dry & Fold';
+    if (orderData && orderData.serviceType) {
+      serviceType = orderData.serviceType;
+    }
+
+    let specialInstructions = 'None';
+    if (orderData && orderData.specialInstructions) {
+      specialInstructions = orderData.specialInstructions;
+    }
+
+    let temperature = 'Cold Wash';
+    if (orderData && orderData.temperature) {
+      temperature = orderData.temperature;
+    }
+
+    let fabricSoftener = true;
+    if (orderData && orderData.fabricSoftener !== undefined) {
+      fabricSoftener = orderData.fabricSoftener;
+    }
+
+    const randomId = Math.floor(1000 + Math.random() * 9000);
+
     const newOrder = {
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: 'ORD-' + randomId,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'in_wash',
-      lockerNumber: orderData.lockerNumber ? orderData.lockerNumber : '03',
-      serviceType: orderData.serviceType ? orderData.serviceType : 'Wash, Dry & Fold',
-      specialInstructions: orderData.specialInstructions ? orderData.specialInstructions : 'None',
-      temperature: orderData.temperature ? orderData.temperature : 'Cold Wash',
-      fabricSoftener: orderData.fabricSoftener !== undefined ? orderData.fabricSoftener : true,
+      lockerNumber: lockerNumber,
+      serviceType: serviceType,
+      loadSize: size,
+      specialInstructions: specialInstructions,
+      temperature: temperature,
+      fabricSoftener: fabricSoftener,
       estimatedReady: 'Today, 6:30 PM',
-      weightKg: 5.2,
-      priceEstimate: 337.00,
+      weightKg: estimatedKg,
+      priceEstimate: estimatedPrice,
     };
     setActiveOrder(newOrder);
   }

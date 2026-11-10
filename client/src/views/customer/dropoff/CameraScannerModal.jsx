@@ -54,6 +54,13 @@ export function CameraScannerModal(props) {
     setFlashlightOn(!flashlightOn);
   }
 
+  function getFlashlightBtnClass() {
+    if (flashlightOn) {
+      return 'scanner-circle-btn flash-active';
+    }
+    return 'scanner-circle-btn';
+  }
+
   return (
     <div className="scanner-overlay-backdrop">
       
@@ -63,7 +70,7 @@ export function CameraScannerModal(props) {
       <div className="scanner-top-bar">
         <button 
           onClick={handleFlashlightToggle}
-          className={`scanner-circle-btn ${flashlightOn ? 'flash-active' : ''}`}
+          className={getFlashlightBtnClass()}
           title="Toggle Flash"
         >
           <Flashlight size={20} />
@@ -98,7 +105,6 @@ export function CameraScannerModal(props) {
         <div style={{ textAlign: 'center', zIndex: 10 }}>
           <Camera size={36} color="rgba(255, 255, 255, 0.4)" />
           <p className="camera-guide-text">Align the QR code inside the frame</p>
-          <p className="camera-sub-meta">Locker Unit #CMH-01</p>
         </div>
       </div>
 

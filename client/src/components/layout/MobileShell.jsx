@@ -23,6 +23,31 @@ export function MobileShell(props) {
   const user = auth.user;
   const logout = auth.logout;
 
+  // Extract display values using explicit if statements (no ternaries)
+  let userInitials = 'JD';
+  let userName = 'Guest';
+  let userLocation = 'Central Mall Hub';
+
+  if (user) {
+    if (user.initials) {
+      userInitials = user.initials;
+    }
+    if (user.name) {
+      userName = user.name;
+    }
+    if (user.location) {
+      userLocation = user.location;
+    }
+  }
+
+  // Helper function: determines active tab CSS class
+  function getNavTabClass(tabKey) {
+    if (activeTab === tabKey) {
+      return 'nav-tab-button tab-active';
+    }
+    return 'nav-tab-button';
+  }
+
   return (
     <div className="shell-viewport">
       <div className="mobile-device-frame">
@@ -47,11 +72,11 @@ export function MobileShell(props) {
             <div className="header-user-row">
               <div className="user-profile-meta">
                 <div className="user-avatar-circle">
-                  {user.initials ? user.initials : 'JD'}
+                  {userInitials}
                 </div>
                 <div>
                   <p className="greeting-text">Good morning,</p>
-                  <h2 className="user-display-name">{user.name}</h2>
+                  <h2 className="user-display-name">{userName}</h2>
                 </div>
               </div>
 
@@ -78,7 +103,7 @@ export function MobileShell(props) {
                 </div>
                 <div>
                   <p className="location-label">Your Active Location</p>
-                  <h3 className="location-name">{user.location ? user.location : 'Central Mall Hub'}</h3>
+                  <h3 className="location-name">{userLocation}</h3>
                 </div>
               </div>
               <ChevronDown size={16} color="var(--slate-400)" />
@@ -87,14 +112,16 @@ export function MobileShell(props) {
             {/* 2 TABS: NEARBY LOCKER | ACTIVE ORDER */}
             <div className="tab-navigation-bar">
               <button
+                type="button"
                 onClick={function () { setActiveTab('nearby'); }}
-                className={`nav-tab-button ${activeTab === 'nearby' ? 'tab-active' : ''}`}
+                className={getNavTabClass('nearby')}
               >
                 NEARBY LOCKER
               </button>
               <button
+                type="button"
                 onClick={function () { setActiveTab('active_order'); }}
-                className={`nav-tab-button ${activeTab === 'active_order' ? 'tab-active' : ''}`}
+                className={getNavTabClass('active_order')}
               >
                 ACTIVE ORDER
               </button>

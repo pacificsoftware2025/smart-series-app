@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { X, Lock, CheckCircle2, Sparkles, AlertCircle } from 'lucide-react';
+import { 
+  X, 
+  Unlock, 
+  CheckCircle2, 
+  Scale, 
+  Check, 
+  Box,
+  ArrowRight
+} from 'lucide-react';
+import { LAUNDRY_SERVICES } from '../../../constants/roles';
 import './ServicePreferenceModal.css';
 
 // ==============================================================================
 // REACT COMPONENT: ServicePreferenceModal
-// This modal opens after a customer scans a locker QR code.
-// It collects their laundry preferences and simulates unlocking the locker door.
+// Configures laundry preferences (service tier, temperature, fabric softener,
+// care instructions) and simulates locker door solenoid actuation.
 // ==============================================================================
 export function ServicePreferenceModal(props) {
   // In Vanilla JS: function arguments (params).
@@ -20,54 +29,124 @@ export function ServicePreferenceModal(props) {
     return null;
   }
 
-  // ============================================================================
-  // ZERO GUESSWORK EXTRACTION (Rule 3 in GEMINI.md)
-  // Instead of chaining guesswork fallbacks like 'stationData?.assignedBox || 03',
-  // we explicitly verify and extract the exact fields upfront.
-  // ============================================================================
-  const stationId = stationData ? stationData.stationId : 'CMH-01';
-  const assignedBox = stationData ? stationData.assignedBox : '03';
+  // Zero-guesswork data extraction using explicit if statements
+  let stationId = 'CMH-01';
+  if (stationData && stationData.stationId) {
+    stationId = stationData.stationId;
+  }
+
+  let assignedBox = '03';
+  if (stationData && stationData.assignedBox) {
+    assignedBox = stationData.assignedBox;
+  }
 
   // ============================================================================
-  // REACT STATE (useState) explained in Vanilla JS:
+  // LOCAL STATE (useState) explained in Vanilla JS:
   // In Vanilla JS:
   //   let selectedService = 'Wash, Dry & Fold';
-  //   let specialInstructions = '';
+  //   let temperature = 'Cold Wash';
+  //   let fabricSoftener = true;
   // In React:
-  //   Controlled inputs bind input.value to state, and update state via onchange.
+  //   State drives the UI. Updating state causes React to re-render the view.
   // ============================================================================
   const [selectedService, setSelectedService] = useState('Wash, Dry & Fold');
+  const [loadSize, setLoadSize] = useState('Medium (Max 7kg)');
   const [specialInstructions, setSpecialInstructions] = useState('');
-  const [temperature, setTemperature] = useState('Cold Wash');
-  const [fabricSoftener, setFabricSoftener] = useState(true);
+  const [temperature, setTemperature] = useState('Cold Wash'); // 'Cold Wash' | 'Warm Wash'
+  const [fabricSoftener, setFabricSoftener] = useState(true); // true = Yes, false = No
   
-  // UI states for the locker door unlocking simulation
+  // Solenoid door actuation simulation states
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [unlockedSuccess, setUnlockedSuccess] = useState(false);
+
+  // Laundry load sizes (Small max 5kg, Medium max 7kg, Large max 9kg)
+  const LOAD_SIZES = [
+    { id: 'Small (Max 5kg)', label: 'Small', maxKg: 'Max 5kg' },
+    { id: 'Medium (Max 7kg)', label: 'Medium', maxKg: 'Max 7kg' },
+    { id: 'Large (Max 9kg)', label: 'Large', maxKg: 'Max 9kg' },
+  ];
+
+  // Helper functions: replaces ternary classNames with readable if/else blocks
+  function getServiceTileClass(serviceLabel) {
+    if (selectedService === serviceLabel) {
+      return 'service-tile selected';
+    }
+    return 'service-tile';
+  }
+
+  function getRadioCircleClass(serviceLabel) {
+    if (selectedService === serviceLabel) {
+      return 'radio-circle active';
+    }
+    return 'radio-circle';
+  }
+
+  function getSizeCardClass(sizeId) {
+    if (loadSize === sizeId) {
+      return 'size-card-btn active';
+    }
+    return 'size-card-btn';
+  }
+
+  function getTempBtnClass(type) {
+    if (type === 'cold') {
+      if (temperature === 'Cold Wash') {
+        return 'temp-btn cold active';
+      }
+      return 'temp-btn cold';
+    }
+    if (temperature === 'Warm Wash') {
+      return 'temp-btn warm active';
+    }
+    return 'temp-btn warm';
+  }
+
+  function getSoftenerBtnClass(isYes) {
+    if (isYes) {
+      if (fabricSoftener === true) {
+        return 'softener-btn yes active';
+      }
+      return 'softener-btn yes';
+    }
+    if (fabricSoftener === false) {
+      return 'softener-btn no active';
+    }
+    return 'softener-btn no';
+  }
 
   // ============================================================================
   // EVENT HANDLER: handleSaveAndUnlockClick
   // In Vanilla JS: button.addEventListener('click', () => { ... })
+  // Simulates solenoid relay trigger and displays the open door confirmation.
   // ============================================================================
   function handleSaveAndUnlockClick() {
-    setIsUnlocking(true); // Shows the spinner button ("Actuating Solenoid Relay...")
+    setIsUnlocking(true); // Shows spinner state
 
-    // Simulate physical solenoid relay trigger (1.2 seconds)
+    // Simulates physical solenoid relay trigger (1.2 seconds)
     setTimeout(function () {
       setIsUnlocking(false);
-      setUnlockedSuccess(true); // Shows the green success view ("Locker Box #03 Unlocked!")
-
-      // After 1.5 seconds, notify the parent component that the order is complete
-      setTimeout(function () {
-        onCompleteOrder({
-          lockerNumber: assignedBox,
-          serviceType: selectedService,
-          specialInstructions: specialInstructions ? specialInstructions : 'Standard care',
-          temperature: temperature,
-          fabricSoftener: fabricSoftener,
-        });
-      }, 1500);
+      setUnlockedSuccess(true); // Shows unlocked success panel and waits for user confirmation
     }, 1200);
+  }
+
+  // ============================================================================
+  // EVENT HANDLER: handleConfirmClosedAndRedirect
+  // Explicitly triggered when user clicks "I've Closed the Locker Door"
+  // ============================================================================
+  function handleConfirmClosedAndRedirect() {
+    let instructions = 'Standard care';
+    if (specialInstructions && specialInstructions.trim().length > 0) {
+      instructions = specialInstructions.trim();
+    }
+
+    onCompleteOrder({
+      lockerNumber: assignedBox,
+      serviceType: selectedService,
+      loadSize: loadSize,
+      specialInstructions: instructions,
+      temperature: temperature,
+      fabricSoftener: fabricSoftener,
+    });
   }
 
   return (
@@ -78,154 +157,209 @@ export function ServicePreferenceModal(props) {
         {/* MODAL HEADER                                                  */}
         {/* ------------------------------------------------------------- */}
         <div className="pref-modal-header">
-          <div>
-            <div className="connected-pill">
-              <span style={{ width: '6px', height: '6px', borderRadius: '9999px', backgroundColor: 'var(--emerald-500)' }}></span>
-              Connected: {stationId}
+          <div className="header-meta-col">
+            <div className="header-badges-row">
+              <span className="station-code-pill">
+                <span className="live-pulse-dot"></span> {stationId}
+              </span>
+              <span className="locker-assigned-pill">
+                <Box size={12} /> Box #{assignedBox} (Medium)
+              </span>
             </div>
-            <h3 className="modal-main-title">
-              Select Laundry Service & Drop Off
-            </h3>
-            <p className="modal-assigned-box-sub">
-              Assigned Locker: <strong style={{ color: 'var(--slate-800)' }}>Box #{assignedBox}</strong> (Medium Compartment)
+            
+            <h3 className="modal-main-title">Select Service & Drop Off</h3>
+            <p className="modal-sub-info">
+              Configure wash preferences before door unlocks.
             </p>
           </div>
 
           <button 
+            type="button"
             onClick={onClose}
             disabled={isUnlocking || unlockedSuccess}
-            className="icon-button"
+            className="pref-close-btn"
             title="Close"
           >
-            <X size={20} color="var(--slate-400)" />
+            <X size={18} />
           </button>
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* CONDITIONAL CONTENT: Success State vs Selection Form          */}
-        {/* In Vanilla JS: if (unlockedSuccess) { renderSuccess() } else { ... } */}
+        {/* CONTENT BODY: Success State vs Configuration Form             */}
         {/* ------------------------------------------------------------- */}
-        {unlockedSuccess ? (
+        {unlockedSuccess && (
           <div className="unlock-success-panel">
             <div className="success-icon-box">
-              <Lock size={32} />
+              <Unlock size={32} />
             </div>
-            <h4 style={{ fontSize: '1.125rem', fontWeight: 900, color: 'var(--slate-900)' }}>
-              Locker Box #{assignedBox} Unlocked!
-            </h4>
-            <p style={{ fontSize: '0.75rem', color: 'var(--slate-500)', maxWidth: '280px', margin: '0 auto' }}>
-              Please insert your laundry bag inside and shut the door firmly. Door will automatically secure upon closure.
-            </p>
-            <div style={{ paddingTop: '0.5rem' }}>
-              <span className="brand-pill">
-                Redirecting to Active Order Tracker...
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             
-            {/* 1. SELECT LAUNDRY SERVICE (Dropdown) */}
-            <div className="form-field-group">
-              <label className="field-label-text">
-                Select Laundry Service
-              </label>
+            <h4 className="success-headline">Locker Box #{assignedBox} Is Open!</h4>
+            
+            <p className="success-instruction">
+              Please insert your laundry bag inside and shut the locker door firmly until it latches.
+            </p>
 
-              <div className="select-wrapper">
-                {/* Controlled select in React: value is linked to state, onChange updates state */}
-                <select
-                  value={selectedService}
-                  onChange={function (event) { setSelectedService(event.target.value); }}
-                  className="service-custom-dropdown"
-                >
-                  <option value="Wash Only">Wash Only (₱40/kg base)</option>
-                  <option value="Wash & Dry">Wash & Dry (₱55/kg base)</option>
-                  <option value="Wash, Dry & Fold">Wash, Dry & Fold (₱65/kg base - Recommended)</option>
-                </select>
-                <div className="select-caret-icon">
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-                  </svg>
-                </div>
+            <button
+              type="button"
+              onClick={handleConfirmClosedAndRedirect}
+              className="confirm-closed-btn"
+            >
+              <span>I've Closed the Locker Door · View Order Tracker</span>
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        )}
+
+        {!unlockedSuccess && (
+          <div className="pref-form-body">
+            
+            {/* 1. INTERACTIVE SERVICE TILES */}
+            <div className="pref-section-block">
+              <div className="section-label-row">
+                <label className="pref-label">Laundry Service Tier</label>
+                <span className="weighed-shop-tag">Weighed at Laundry Shop</span>
               </div>
 
-              <div className="selected-service-info-pill">
-                <span style={{ fontWeight: 600 }}>Selected: {selectedService}</span>
-                <span style={{ fontSize: '10px', backgroundColor: '#ffffff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                  Weighed at shop
-                </span>
+              <div className="service-cards-stack">
+                {LAUNDRY_SERVICES.map(function (service) {
+                  return (
+                    <div
+                      key={service.id}
+                      onClick={function () { setSelectedService(service.label); }}
+                      className={getServiceTileClass(service.label)}
+                    >
+                      <div className="service-tile-left">
+                        <div className={getRadioCircleClass(service.label)}>
+                          {selectedService === service.label && (
+                            <Check size={12} color="#ffffff" strokeWidth={3} />
+                          )}
+                        </div>
+                        <div className="service-tile-info">
+                          <span className="service-tile-name">{service.label}</span>
+                          <span className="service-tile-desc">{service.description}</span>
+                        </div>
+                      </div>
+
+                      <div className="service-tile-price">
+                        <span className="price-amount">{service.basePrice}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Quick Preferences: Temp & Softener */}
-            <div className="toggles-2col-grid">
-              <div>
-                <label className="field-label-text" style={{ fontSize: '11px', marginBottom: '4px' }}>Water Temp</label>
-                <div className="temp-toggle-box">
+            {/* 2. SELECT LAUNDRY SERVICE SIZE (Small / Medium / Large) */}
+            <div className="pref-section-block">
+              <label className="pref-label">Select Laundry Service Size</label>
+              <div className="size-cards-grid">
+                {LOAD_SIZES.map(function (size) {
+                  return (
+                    <button
+                      key={size.id}
+                      type="button"
+                      onClick={function () { setLoadSize(size.id); }}
+                      className={getSizeCardClass(size.id)}
+                    >
+                      <span className="size-card-label">{size.label}</span>
+                      <span className="size-card-kg">{size.maxKg}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. WASH OPTIONS (Temp & Softener with Custom Colors) */}
+            <div className="wash-options-2col">
+              
+              {/* Water Temperature Segmented Control: Cold = Blue, Warm = Warmer Color */}
+              <div className="option-col">
+                <label className="pref-label">Water Temperature</label>
+                <div className="option-segmented-group">
                   <button
                     type="button"
                     onClick={function () { setTemperature('Cold Wash'); }}
-                    className={`temp-btn ${temperature === 'Cold Wash' ? 'temp-active' : ''}`}
+                    className={getTempBtnClass('cold')}
                   >
                     Cold
                   </button>
                   <button
                     type="button"
                     onClick={function () { setTemperature('Warm Wash'); }}
-                    className={`temp-btn ${temperature === 'Warm Wash' ? 'temp-active' : ''}`}
+                    className={getTempBtnClass('warm')}
                   >
                     Warm
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="field-label-text" style={{ fontSize: '11px', marginBottom: '4px' }}>Fabric Softener</label>
-                <button
-                  type="button"
-                  onClick={function () { setFabricSoftener(!fabricSoftener); }}
-                  className={`softener-btn ${fabricSoftener ? 'softener-active' : ''}`}
-                >
-                  <Sparkles size={14} />
-                  <span>{fabricSoftener ? 'Included (Yes)' : 'No Softener'}</span>
-                </button>
+              {/* Fabric Softener Segmented Control: Yes = Green, No = Red */}
+              <div className="option-col">
+                <label className="pref-label">Fabric Softener</label>
+                <div className="option-segmented-group">
+                  <button
+                    type="button"
+                    onClick={function () { setFabricSoftener(true); }}
+                    className={getSoftenerBtnClass(true)}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={function () { setFabricSoftener(false); }}
+                    className={getSoftenerBtnClass(false)}
+                  >
+                    No
+                  </button>
+                </div>
               </div>
+
             </div>
 
-            {/* 2. SPECIAL INSTRUCTIONS INPUT FIELD */}
-            <div className="form-field-group">
-              <label className="field-label-text">
-                Special Instructions
-              </label>
-              {/* Controlled textarea: in Vanilla JS, textarea.addEventListener('input', (e) => value = e.target.value) */}
+            {/* 3. SPECIAL INSTRUCTIONS TEXTAREA (Suggestions removed) */}
+            <div className="pref-section-block">
+              <label className="pref-label">Special Instructions</label>
+              
               <textarea
                 rows={3}
                 value={specialInstructions}
                 onChange={function (event) { setSpecialInstructions(event.target.value); }}
                 placeholder="Special instructions (e.g. delicate fabrics, separate whites, baby hypoallergenic detergent)..."
-                className="special-notes-textarea"
+                className="pref-textarea"
               />
             </div>
 
-            {/* Pricing Disclaimer */}
-            <div className="weigh-disclaimer-notice">
-              <AlertCircle size={16} color="var(--brand-orange)" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span>No payment due right now. Final invoice will be calculated and sent after verified scale weighing at the central shop.</span>
+            {/* 4. REASSURING PRICING & WEIGHING NOTICE */}
+            <div className="pricing-reassurance-card">
+              <div className="reassurance-icon">
+                <Scale size={18} />
+              </div>
+              <div className="reassurance-text">
+                <span className="reassurance-title">No payment due right now</span>
+                <span className="reassurance-sub">
+                  Final invoice will be calculated and sent after verified scale weighing at the laundry shop.
+                </span>
+              </div>
             </div>
 
-            {/* 3. BUTTON SAVE PREFERENCE AND UNLOCK LOCKER */}
+            {/* 5. PRIMARY BUTTON: SAVE & UNLOCK SOLENOID */}
             <button
+              type="button"
               onClick={handleSaveAndUnlockClick}
               disabled={isUnlocking}
-              className="save-unlock-primary-btn"
+              className="unlock-solenoid-btn"
             >
-              {isUnlocking ? (
-                <span>Actuating Solenoid Relay...</span>
-              ) : (
-                <>
-                  <Lock size={16} />
+              {isUnlocking && (
+                <div className="btn-unlocking-state">
+                  <div className="button-spinner"></div>
+                  <span>Actuating Solenoid Relay Box #{assignedBox}...</span>
+                </div>
+              )}
+              {!isUnlocking && (
+                <div className="btn-idle-state">
+                  <Unlock size={17} />
                   <span>Save Preference & Unlock Locker</span>
-                </>
+                </div>
               )}
             </button>
 

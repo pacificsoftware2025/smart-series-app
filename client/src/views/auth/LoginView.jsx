@@ -50,9 +50,25 @@ export function LoginView() {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
-    const nameToUse = signupName.trim().length > 0 ? signupName : 'New Customer';
-    const phoneToUse = signupPhone.trim().length > 0 ? signupPhone : '917 000 0000';
+    let nameToUse = 'New Customer';
+    if (signupName && signupName.trim().length > 0) {
+      nameToUse = signupName.trim();
+    }
+
+    let phoneToUse = '917 000 0000';
+    if (signupPhone && signupPhone.trim().length > 0) {
+      phoneToUse = signupPhone.trim();
+    }
+
     signupCustomer(nameToUse, phoneToUse);
+  }
+
+  // Helper function: determines CSS class for active auth tab
+  function getAuthTabClass(mode) {
+    if (authMode === mode) {
+      return 'auth-tab-btn active-tab';
+    }
+    return 'auth-tab-btn';
   }
 
   return (
@@ -98,8 +114,8 @@ export function LoginView() {
             <div className="auth-tab-bar">
               <button
                 type="button"
-                onClick={() => setAuthMode('signin')}
-                className={authMode === 'signin' ? 'auth-tab-btn active-tab' : 'auth-tab-btn'}
+                onClick={function () { setAuthMode('signin'); }}
+                className={getAuthTabClass('signin')}
               >
                 <LogIn size={14} />
                 <span>Sign In</span>
@@ -107,8 +123,8 @@ export function LoginView() {
 
               <button
                 type="button"
-                onClick={() => setAuthMode('signup')}
-                className={authMode === 'signup' ? 'auth-tab-btn active-tab' : 'auth-tab-btn'}
+                onClick={function () { setAuthMode('signup'); }}
+                className={getAuthTabClass('signup')}
               >
                 <UserPlus size={14} />
                 <span>Sign Up</span>

@@ -55,6 +55,57 @@ function getOrderHeadline(activeStep, isPaid) {
   return 'Wash Day, Underway';
 }
 
+// Determines the in-progress status pill text without nested ternaries
+function getStatusPillText(step, paid) {
+  if (step === 4) {
+    if (paid) {
+      return 'Ready';
+    }
+    return 'Payment';
+  }
+  return 'In Progress';
+}
+
+// Determines payment method button CSS class
+function getPayMethodClass(method, selected) {
+  if (method === selected) {
+    return 'pay-method-btn selected-method';
+  }
+  return 'pay-method-btn';
+}
+
+// Determines dev simulator button CSS class
+function getDevStepBtnClass(stepNumber, activeStep) {
+  if (stepNumber === activeStep) {
+    return 'dev-state-btn active-dev-state';
+  }
+  return 'dev-state-btn';
+}
+
+// Determines Yes/No label for fabric softener
+function getFabricSoftenerLabel(hasSoftener) {
+  if (hasSoftener) {
+    return 'Yes';
+  }
+  return 'No';
+}
+
+// Determines if step 3 sparkle icon should spin
+function getStep3SparkleClass(step) {
+  if (step === 3) {
+    return 'animate-spin';
+  }
+  return '';
+}
+
+// Determines meta text for Step 4
+function getStep4Meta(paid) {
+  if (paid) {
+    return 'Box #06';
+  }
+  return 'PIN on Pay';
+}
+
 // ==============================================================================
 // REACT COMPONENT: ActiveOrderCard
 // Think of this component as a JavaScript function that takes data (props)
@@ -124,25 +175,25 @@ export function ActiveOrderCard(props) {
           <div className="dev-state-switcher">
             <button
               onClick={() => { setCurrentStep(1); setIsPaid(false); }}
-              className={`dev-state-btn ${currentStep === 1 ? 'active-dev-state' : ''}`}
+              className={getDevStepBtnClass(1, currentStep)}
             >
               1. Dropped Off
             </button>
             <button
               onClick={() => { setCurrentStep(2); setIsPaid(false); }}
-              className={`dev-state-btn ${currentStep === 2 ? 'active-dev-state' : ''}`}
+              className={getDevStepBtnClass(2, currentStep)}
             >
               2. Rider Pickup
             </button>
             <button
               onClick={() => { setCurrentStep(3); setIsPaid(false); }}
-              className={`dev-state-btn ${currentStep === 3 ? 'active-dev-state' : ''}`}
+              className={getDevStepBtnClass(3, currentStep)}
             >
               3. In Wash
             </button>
             <button
               onClick={() => { setCurrentStep(4); setIsPaid(false); }}
-              className={`dev-state-btn ${currentStep === 4 ? 'active-dev-state' : ''}`}
+              className={getDevStepBtnClass(4, currentStep)}
             >
               4. Deliver & Pay
             </button>
@@ -174,7 +225,7 @@ export function ActiveOrderCard(props) {
           </div>
 
           <span className="in-progress-pill">
-            {currentStep === 4 ? (isPaid ? 'Ready' : 'Payment') : 'In Progress'}
+            {getStatusPillText(currentStep, isPaid)}
           </span>
         </div>
 
@@ -187,7 +238,8 @@ export function ActiveOrderCard(props) {
           {/* Step 1: Dropped Off */}
           <div>
             <div className={getStepCircleClass(1, currentStep, isPaid)}>
-              {currentStep > 1 ? <CheckCircle2 size={14} /> : '1'}
+              {currentStep > 1 && <CheckCircle2 size={14} />}
+              {currentStep === 1 && '1'}
             </div>
             <p className={getStepTitleClass(1, currentStep)}>Dropped Off</p>
             <p className="step-meta">Locker #{activeOrder.lockerNumber}</p>
@@ -196,7 +248,8 @@ export function ActiveOrderCard(props) {
           {/* Step 2: Rider Pickup */}
           <div>
             <div className={getStepCircleClass(2, currentStep, isPaid)}>
-              {currentStep > 2 ? <CheckCircle2 size={14} /> : <Truck size={12} />}
+              {currentStep > 2 && <CheckCircle2 size={14} />}
+              {currentStep <= 2 && <Truck size={12} />}
             </div>
             <p className={getStepTitleClass(2, currentStep)}>Rider Pickup</p>
             <p className="step-meta">Van In Transit</p>
@@ -205,7 +258,10 @@ export function ActiveOrderCard(props) {
           {/* Step 3: In Wash */}
           <div>
             <div className={getStepCircleClass(3, currentStep, isPaid)}>
-              {currentStep > 3 ? <CheckCircle2 size={14} /> : <Sparkles size={12} className={currentStep === 3 ? 'animate-spin' : ''} />}
+              {currentStep > 3 && <CheckCircle2 size={14} />}
+              {currentStep <= 3 && (
+                <Sparkles size={12} className={getStep3SparkleClass(currentStep)} />
+              )}
             </div>
             <p className={getStepTitleClass(3, currentStep)}>In Wash</p>
             <p className="step-meta">Central Hub</p>
@@ -214,10 +270,11 @@ export function ActiveOrderCard(props) {
           {/* Step 4: Delivery & Payment */}
           <div>
             <div className={getStepCircleClass(4, currentStep, isPaid)}>
-              {isPaid ? <CheckCircle2 size={14} /> : '4'}
+              {isPaid && <CheckCircle2 size={14} />}
+              {!isPaid && '4'}
             </div>
             <p className={getStepTitleClass(4, currentStep)}>Delivery & Pay</p>
-            <p className="step-meta">{isPaid ? 'Box #06' : 'PIN on Pay'}</p>
+            <p className="step-meta">{getStep4Meta(isPaid)}</p>
           </div>
 
         </div>
@@ -231,13 +288,17 @@ export function ActiveOrderCard(props) {
             <span className="detail-value">{activeOrder.serviceType}</span>
           </div>
           <div className="detail-row">
+            <span>Load Size:</span>
+            <span className="detail-value">{activeOrder.loadSize}</span>
+          </div>
+          <div className="detail-row">
             <span>Water Temperature:</span>
             <span className="detail-value">{activeOrder.temperature}</span>
           </div>
           <div className="detail-row">
             <span>Fabric Softener:</span>
             <span className="detail-value" style={{ color: 'var(--emerald-600)' }}>
-              {activeOrder.fabricSoftener ? 'Yes' : 'No'}
+              {getFabricSoftenerLabel(activeOrder.fabricSoftener)}
             </span>
           </div>
           <div className="detail-row" style={{ paddingTop: '4px', borderTop: '1px solid var(--slate-200)' }}>
@@ -297,21 +358,21 @@ export function ActiveOrderCard(props) {
               <button
                 type="button"
                 onClick={() => setSelectedPayment('GCash')}
-                className={`pay-method-btn ${selectedPayment === 'GCash' ? 'selected-method' : ''}`}
+                className={getPayMethodClass('GCash', selectedPayment)}
               >
                 GCash
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedPayment('Maya')}
-                className={`pay-method-btn ${selectedPayment === 'Maya' ? 'selected-method' : ''}`}
+                className={getPayMethodClass('Maya', selectedPayment)}
               >
                 Maya
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedPayment('Card')}
-                className={`pay-method-btn ${selectedPayment === 'Card' ? 'selected-method' : ''}`}
+                className={getPayMethodClass('Card', selectedPayment)}
               >
                 Credit Card
               </button>
