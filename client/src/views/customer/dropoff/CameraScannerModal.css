@@ -1,0 +1,180 @@
+/* CameraScannerModal.css */
+.scanner-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  color: #ffffff;
+}
+
+.scanner-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+}
+
+.scanner-instruction-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--slate-300);
+}
+
+.scanner-circle-btn {
+  background-color: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.scanner-circle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.scanner-circle-btn.flash-active {
+  background-color: var(--brand-amber);
+  color: var(--slate-950);
+}
+
+/* Center Viewfinder */
+.scanner-viewfinder-box {
+  position: relative;
+  width: 16rem;
+  height: 16rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewfinder-dash-border {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+/* Corner Brackets */
+.corner-bracket {
+  position: absolute;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.bracket-tl {
+  top: -2px;
+  left: -2px;
+  border-top: 4px solid var(--brand-orange);
+  border-left: 4px solid var(--brand-orange);
+  border-top-left-radius: 12px;
+}
+
+.bracket-tr {
+  top: -2px;
+  right: -2px;
+  border-top: 4px solid var(--brand-orange);
+  border-right: 4px solid var(--brand-orange);
+  border-top-right-radius: 12px;
+}
+
+.bracket-bl {
+  bottom: -2px;
+  left: -2px;
+  border-bottom: 4px solid var(--brand-orange);
+  border-left: 4px solid var(--brand-orange);
+  border-bottom-left-radius: 12px;
+}
+
+.bracket-br {
+  bottom: -2px;
+  right: -2px;
+  border-bottom: 4px solid var(--brand-orange);
+  border-right: 4px solid var(--brand-orange);
+  border-bottom-right-radius: 12px;
+}
+
+/* Sweeping Laser */
+.scanner-laser-bar {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--brand-orange), transparent);
+  box-shadow: 0 0 15px var(--brand-orange);
+  animation: laserSweep 2s infinite ease-in-out;
+  z-index: 20;
+}
+
+@keyframes laserSweep {
+  0% { top: 10%; opacity: 0.8; }
+  50% { top: 85%; opacity: 0.3; }
+  100% { top: 10%; opacity: 0.8; }
+}
+
+.camera-guide-text {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.camera-sub-meta {
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 0.25rem;
+}
+
+/* Bottom Controls */
+.scanner-bottom-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1.5rem;
+  max-width: 20rem;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Skip QR Test Button */
+.skip-qr-test-btn {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, var(--brand-orange), var(--brand-amber));
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.4);
+  transition: all 0.15s ease;
+}
+
+.skip-qr-test-btn:hover {
+  background: linear-gradient(135deg, var(--brand-orange-hover), #d97706);
+  transform: translateY(-1px);
+}
+
+.skip-qr-test-btn:active {
+  transform: scale(0.99);
+}

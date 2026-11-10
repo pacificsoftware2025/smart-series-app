@@ -1,0 +1,234 @@
+/* NearbyLockerCard.css */
+.nearby-section-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-headline-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 0.25rem;
+}
+
+.distance-subtag {
+  color: var(--slate-400);
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+/* Main Card */
+.station-preview-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid var(--slate-200);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.station-preview-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Map Graphic Area */
+.map-visual-container {
+  position: relative;
+  height: 9rem;
+  background-color: var(--slate-100);
+  cursor: pointer;
+  overflow: hidden;
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.vector-map-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+}
+
+.city-district-badge {
+  position: absolute;
+  top: 1.75rem;
+  left: 1rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 0.25rem 0.625rem;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--slate-600);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--slate-200);
+}
+
+.map-pin-anchor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pin-icon-circle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background-color: var(--brand-orange);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.4);
+  border: 2px solid #ffffff;
+}
+
+.mall-name-pill {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 0.25rem 0.625rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--slate-200);
+}
+
+.open-nav-floater {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.open-nav-floater:hover {
+  background-color: var(--brand-orange);
+}
+
+/* Card Body */
+.station-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.station-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.station-main-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  letter-spacing: -0.02em;
+}
+
+.station-sub-info {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+  margin-top: 0.125rem;
+}
+
+/* Availability Pill */
+.availability-status-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--emerald-50);
+  border: 1px solid var(--emerald-100);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--emerald-800);
+}
+
+.availability-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avail-icon-box {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 8px;
+  background-color: var(--emerald-100);
+  color: var(--emerald-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-green-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background-color: var(--emerald-500);
+}
+
+/* Main CTA Button */
+.scan-drop-cta-btn {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, var(--brand-orange), var(--brand-amber));
+  border: none;
+  color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  transition: all 0.15s ease;
+}
+
+.scan-drop-cta-btn:hover {
+  background: linear-gradient(135deg, var(--brand-orange-hover), #d97706);
+}
+
+.scan-drop-cta-btn:active {
+  transform: scale(0.99);
+}
+
+.btn-left-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.qr-icon-plate {
+  padding: 0.375rem;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+

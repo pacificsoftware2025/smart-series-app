@@ -1,0 +1,220 @@
+/* LoginView.css - Redesigned Clean Minimalist Layout & Color Scheme */
+.login-viewport {
+  min-height: 100vh;
+  background-color: var(--slate-950);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .login-viewport {
+    padding: 1.5rem;
+  }
+}
+
+.login-mobile-frame {
+  width: 100%;
+  max-width: 440px;
+  background-color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .login-mobile-frame {
+    min-height: 840px;
+    max-height: 900px;
+    border-radius: 40px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    border: 8px solid var(--slate-800);
+  }
+}
+
+/* Status Bar */
+.login-status-bar {
+  padding: 0.75rem 1.5rem 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--slate-800);
+  background-color: #ffffff;
+  user-select: none;
+}
+
+/* Main Content Body */
+.login-content-body {
+  flex: 1;
+  padding: 2.5rem 1.75rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-brand-header {
+  margin-bottom: 2.25rem;
+}
+
+.login-app-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--slate-900);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.login-app-subtitle {
+  font-size: 0.8125rem;
+  color: var(--slate-500);
+  margin-top: 0.5rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* Options Stack */
+.login-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.login-section-caption {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--slate-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+/* Role Option Cards */
+.login-role-card {
+  width: 100%;
+  padding: 1.125rem 1.25rem;
+  border-radius: 20px;
+  border: 1px solid var(--slate-200);
+  background-color: var(--slate-50);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.login-role-card:hover {
+  background-color: #ffffff;
+  border-color: var(--slate-300);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+/* Primary Customer Highlight Card */
+.login-role-card.customer-active-card {
+  background-color: var(--brand-orange);
+  border: 1px solid var(--brand-orange);
+  color: #ffffff;
+  box-shadow: 0 10px 25px -4px rgba(234, 88, 12, 0.35);
+}
+
+.login-role-card.customer-active-card:hover {
+  background-color: var(--brand-orange-hover);
+  border-color: var(--brand-orange-hover);
+  box-shadow: 0 14px 28px -4px rgba(234, 88, 12, 0.45);
+}
+
+/* Disabled Role Card */
+.login-role-card.disabled-role-card {
+  background-color: #ffffff;
+  border-color: var(--slate-200);
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.login-role-card.disabled-role-card:hover {
+  transform: none;
+  background-color: #ffffff;
+  border-color: var(--slate-200);
+}
+
+.role-card-lead {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.role-icon-plate {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 14px;
+  background-color: #ffffff;
+  color: var(--slate-700);
+  border: 1px solid var(--slate-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.customer-active-card .role-icon-plate {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.disabled-role-card .role-icon-plate {
+  background-color: var(--slate-100);
+  border-color: var(--slate-200);
+  color: var(--slate-400);
+}
+
+.role-text-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-primary-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  letter-spacing: -0.01em;
+}
+
+.customer-active-card .role-primary-title {
+  color: #ffffff;
+}
+
+.disabled-role-card .role-primary-title {
+  color: var(--slate-500);
+}
+
+.role-secondary-sub {
+  font-size: 0.6875rem;
+  color: var(--slate-400);
+  margin-top: 0.15rem;
+}
+
+.customer-active-card .role-secondary-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.disabled-tag-pill {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--slate-100);
+  color: var(--slate-500);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--slate-200);
+}

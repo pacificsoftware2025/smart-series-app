@@ -1,0 +1,365 @@
+/* ActiveOrderCard.css */
+.active-order-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.empty-order-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 2rem 1.5rem;
+  border: 1px solid var(--slate-200);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin: 1rem 0;
+}
+
+.empty-icon-bubble {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 16px;
+  background-color: var(--brand-orange-light);
+  color: var(--brand-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.empty-desc {
+  font-size: 0.75rem;
+  color: var(--slate-400);
+  max-width: 280px;
+  line-height: 1.4;
+}
+
+.empty-action-btn {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--brand-orange);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: background-color 0.15s ease;
+}
+
+.empty-action-btn:hover {
+  background-color: var(--brand-orange-hover);
+}
+
+/* Active Progress Card */
+.active-order-main-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 1.25rem;
+  border: 1px solid var(--slate-200);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Dev State Switcher Pills */
+.dev-state-switcher {
+  background-color: var(--slate-100);
+  padding: 0.25rem;
+  border-radius: 12px;
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.dev-state-btn {
+  flex: 1;
+  padding: 0.375rem 0.25rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.dev-state-btn:hover {
+  color: var(--slate-900);
+}
+
+.dev-state-btn.active-dev-state {
+  background-color: #ffffff;
+  color: var(--brand-orange);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.order-headline-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.order-id-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--amber-700);
+  background-color: var(--amber-50);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--amber-200);
+}
+
+.order-timestamp-text {
+  font-size: 0.625rem;
+  color: var(--slate-400);
+  font-weight: 600;
+}
+
+.order-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-top: 0.25rem;
+}
+
+.est-ready-line {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.in-progress-pill {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--brand-orange);
+  background-color: var(--brand-orange-light);
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid #fed7aa;
+}
+
+/* 4-Step Stepper Grid */
+.order-stepper-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.375rem;
+  text-align: center;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--slate-100);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.stepper-circle {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0 auto 0.25rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.step-done {
+  background-color: var(--emerald-500);
+  color: #ffffff;
+}
+
+.step-current {
+  background-color: var(--brand-orange);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px #ffedd5;
+}
+
+.step-pending {
+  background-color: var(--slate-100);
+  color: var(--slate-400);
+}
+
+.step-title {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  line-height: 1.2;
+}
+
+.step-current-text {
+  color: var(--brand-orange);
+}
+
+.step-meta {
+  font-size: 0.5625rem;
+  color: var(--slate-400);
+  margin-top: 2px;
+}
+
+/* Details summary tray */
+.order-details-tray {
+  padding: 0.75rem;
+  background-color: var(--slate-50);
+  border-radius: 16px;
+  border: 1px solid var(--slate-100);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--slate-600);
+}
+
+.detail-value {
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+/* Lock safeguard card */
+.safeguard-locked-box {
+  padding: 0.875rem;
+  border-radius: 16px;
+  background-color: var(--amber-50);
+  border: 1px solid var(--amber-200);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: 0.75rem;
+  color: var(--amber-900);
+}
+
+.safeguard-heading {
+  font-weight: 700;
+  color: var(--amber-900);
+  margin-bottom: 0.125rem;
+}
+
+.safeguard-desc {
+  font-size: 0.6875rem;
+  color: var(--amber-800);
+  line-height: 1.4;
+}
+
+/* Step 4: Final Billing & Payment Section */
+.billing-payment-card {
+  background-color: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: 20px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.billing-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--slate-100);
+  padding-bottom: 0.625rem;
+}
+
+.billing-total-amount {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--slate-900);
+}
+
+.payment-method-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pay-method-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--slate-200);
+  background-color: var(--slate-50);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--slate-700);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pay-method-btn.selected-method {
+  border-color: var(--brand-orange);
+  background-color: var(--brand-orange-light);
+  color: var(--brand-orange);
+}
+
+.pay-unlock-cta-btn {
+  width: 100%;
+  padding: 0.875rem;
+  background: linear-gradient(135deg, var(--brand-orange), var(--brand-amber));
+  border: none;
+  color: #ffffff;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.3);
+  transition: all 0.15s ease;
+}
+
+.pay-unlock-cta-btn:hover {
+  background: linear-gradient(135deg, var(--brand-orange-hover), #d97706);
+}
+
+/* Claim PIN box */
+.claim-pin-box {
+  background-color: var(--emerald-50);
+  border: 1px solid var(--emerald-200);
+  border-radius: 16px;
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pin-digits-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.375rem;
+  margin: 0.25rem 0;
+}
+
+.pin-digit-cell {
+  width: 2.25rem;
+  height: 2.75rem;
+  background-color: #ffffff;
+  border: 1px solid var(--emerald-200);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 900;
+  color: var(--emerald-800);
+}
