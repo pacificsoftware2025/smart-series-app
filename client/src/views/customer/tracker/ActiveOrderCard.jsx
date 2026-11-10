@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { Clock, CheckCircle2, Sparkles, ShieldCheck, Truck, Lock, CreditCard, Key, PackageCheck, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle2, ShieldCheck, Truck, Lock, CreditCard, Key, PackageCheck, AlertCircle } from 'lucide-react';
+import inwashMachineIcon from '../../../assets/icons/inwash-machine.png';
 import './ActiveOrderCard.css';
 
 // ==============================================================================
@@ -168,6 +169,52 @@ function hasValidInstructions(notes) {
   return true;
 }
 
+// Computes itemized billing breakdown for Step 4 invoice
+function getBillBreakdown(order) {
+  let total = 337.00;
+  if (order && order.priceEstimate) {
+    total = order.priceEstimate;
+  }
+
+  let weight = 5.2;
+  if (order && order.weightKg) {
+    weight = order.weightKg;
+  }
+
+  let serviceName = 'Wash & Dry';
+  if (order && order.serviceType) {
+    serviceName = order.serviceType;
+  }
+
+  let hasSoftener = false;
+  if (order && order.fabricSoftener) {
+    hasSoftener = true;
+  }
+
+  let softenerFee = 0.00;
+  if (hasSoftener) {
+    softenerFee = 25.00;
+  }
+
+  // Base service cost is total minus softener fee
+  let baseServiceCost = total - softenerFee;
+  if (baseServiceCost < 0) {
+    baseServiceCost = total;
+  }
+
+  let ratePerKg = (baseServiceCost / weight).toFixed(2);
+
+  return {
+    serviceName: serviceName,
+    weight: weight,
+    ratePerKg: ratePerKg,
+    baseServiceCost: baseServiceCost.toFixed(2),
+    hasSoftener: hasSoftener,
+    softenerFee: softenerFee.toFixed(2),
+    totalAmount: total.toFixed(2),
+  };
+}
+
 // ==============================================================================
 // REACT COMPONENT: ActiveOrderCard
 // In Vanilla JS: A function that takes data and returns an HTML string / DOM tree.
@@ -237,6 +284,9 @@ export function ActiveOrderCard(props) {
   if (activeOrder.weightKg) {
     displayWeight = activeOrder.weightKg;
   }
+
+  // Calculate itemized bill breakdown for Step 4 invoice
+  const bill = getBillBreakdown(activeOrder);
 
   // Check if special instructions exist
   const showSpecialNotes = hasValidInstructions(activeOrder.specialInstructions);
@@ -358,7 +408,13 @@ export function ActiveOrderCard(props) {
             <div className="stepper-node-item">
               <div className={getStepCircleClass(3, currentStep, isPaid)}>
                 {currentStep > 3 && <CheckCircle2 size={14} />}
-                {currentStep <= 3 && <Sparkles size={13} />}
+                {currentStep <= 3 && (
+                  <img 
+                    src={inwashMachineIcon} 
+                    alt="In Wash" 
+                    className="inwash-stepper-icon" 
+                  />
+                )}
               </div>
               <span className={getStepLabelClass(3, currentStep, isPaid)}>In Wash</span>
               <span className="stepper-node-sub">Central Hub</span>
@@ -412,7 +468,11 @@ export function ActiveOrderCard(props) {
         {currentStep === 3 && (
           <div className="stage-context-box">
             <div className="stage-context-icon icon-purple">
-              <Sparkles size={18} />
+              <img 
+                src={inwashMachineIcon} 
+                alt="Washing Cycle" 
+                className="inwash-context-icon" 
+              />
             </div>
             <div className="stage-context-body">
               <h4 className="stage-context-title">Washing & Folding Cycle Active</h4>
@@ -474,38 +534,86 @@ export function ActiveOrderCard(props) {
               <div className="invoice-tag">Locker Delivery Complete</div>
               <h4 className="invoice-title">Clean Laundry Ready at Box #06</h4>
               <p className="invoice-subtext">
-                Intake weight verified at {displayWeight} kg • Standard care package
+                Intake weight verified at {bill.weight} kg • Professional Care Package
               </p>
             </div>
 
-            <div className="invoice-total-row">
-              <span className="invoice-total-label">Total Amount Due:</span>
-              <span className="invoice-total-amount">₱{displayPrice}</span>
+            {/* Itemized Billing Breakdown Box */}
+            <div className="invoice-breakdown-box">
+              <div className="breakdown-header">
+                <span className="breakdown-header-title">Itemized Billing Breakdown</span>
+                <span className="breakdown-tag">Verified Rate</span>
+              </div>
+
+              <div className="breakdown-rows-list">
+                {/* Line 1: Primary Laundry Service */}
+                <div className="breakdown-row">
+                  <div className="breakdown-item-info">
+                    <span className="breakdown-item-name">{bill.serviceName}</span>
+                    <span className="breakdown-item-sub">
+                      {bill.weight} kg verified @ ₱{bill.ratePerKg}/kg
+                    </span>
+                  </div>
+                  <span className="breakdown-item-amount">₱{bill.baseServiceCost}</span>
+                </div>
+
+                {/* Line 2: Fabric Softener (Rendered only if customer selected softener) */}
+                {bill.hasSoftener && (
+                  <div className="breakdown-row">
+                    <div className="breakdown-item-info">
+                      <span className="breakdown-item-name">Fabric Softener Care</span>
+                      <span className="breakdown-item-sub">Downy Sunrise Fresh • Add-on</span>
+                    </div>
+                    <span className="breakdown-item-amount">₱{bill.softenerFee}</span>
+                  </div>
+                )}
+
+                {/* Line 3: Smart Locker Box UV Sanitization */}
+                <div className="breakdown-row">
+                  <div className="breakdown-item-info">
+                    <span className="breakdown-item-name">Smart Locker Storage</span>
+                    <span className="breakdown-item-sub">Box #06 • UV-C Sanitized Compartment</span>
+                  </div>
+                  <span className="breakdown-free-badge">FREE</span>
+                </div>
+              </div>
+
+              {/* Total Summary Row */}
+              <div className="invoice-total-row">
+                <div className="invoice-total-meta">
+                  <span className="invoice-total-label">Total Amount Due</span>
+                  <span className="invoice-total-sub">Includes 12% VAT & Terminal Fees</span>
+                </div>
+                <span className="invoice-total-amount">₱{bill.totalAmount}</span>
+              </div>
             </div>
 
             {/* Payment Method Selector */}
-            <div className="payment-options-grid">
-              <button
-                type="button"
-                onClick={function () { setSelectedPayment('GCash'); }}
-                className={getPayMethodClass('GCash', selectedPayment)}
-              >
-                <span className="pay-method-name">GCash</span>
-              </button>
-              <button
-                type="button"
-                onClick={function () { setSelectedPayment('Maya'); }}
-                className={getPayMethodClass('Maya', selectedPayment)}
-              >
-                <span className="pay-method-name">Maya</span>
-              </button>
-              <button
-                type="button"
-                onClick={function () { setSelectedPayment('Card'); }}
-                className={getPayMethodClass('Card', selectedPayment)}
-              >
-                <span className="pay-method-name">Card</span>
-              </button>
+            <div className="payment-method-section">
+              <span className="payment-section-title">Select Payment Method</span>
+              <div className="payment-options-grid">
+                <button
+                  type="button"
+                  onClick={function () { setSelectedPayment('GCash'); }}
+                  className={getPayMethodClass('GCash', selectedPayment)}
+                >
+                  <span className="pay-method-name">GCash</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={function () { setSelectedPayment('Maya'); }}
+                  className={getPayMethodClass('Maya', selectedPayment)}
+                >
+                  <span className="pay-method-name">Maya</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={function () { setSelectedPayment('Card'); }}
+                  className={getPayMethodClass('Card', selectedPayment)}
+                >
+                  <span className="pay-method-name">Card</span>
+                </button>
+              </div>
             </div>
 
             <button
@@ -514,7 +622,7 @@ export function ActiveOrderCard(props) {
               className="pay-checkout-cta-btn"
             >
               <CreditCard size={18} />
-              <span>Pay ₱{displayPrice} & Unlock Box #06</span>
+              <span>Pay ₱{bill.totalAmount} & Unlock Box #06</span>
             </button>
           </div>
         )}

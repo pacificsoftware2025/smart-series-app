@@ -55,6 +55,13 @@ export function CustomerView(props) {
     setActiveTab('active_order'); // Automatically switches the screen to the ACTIVE ORDER tab!
   }
 
+  function handleOpenScanner(stationData) {
+    if (stationData) {
+      setScannedStationData(stationData);
+    }
+    setIsScannerOpen(true);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       
@@ -63,7 +70,7 @@ export function CustomerView(props) {
       {/* If activeTab is 'nearby', show the NearbyLockerCard.          */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'nearby' && (
-        <NearbyLockerCard onOpenScanner={function () { setIsScannerOpen(true); }} />
+        <NearbyLockerCard onOpenScanner={handleOpenScanner} />
       )}
 
       {/* ------------------------------------------------------------- */}
@@ -79,6 +86,7 @@ export function CustomerView(props) {
       {/* ------------------------------------------------------------- */}
       <CameraScannerModal
         isOpen={isScannerOpen}
+        stationData={scannedStationData}
         onClose={function () { setIsScannerOpen(false); }}
         onScanSuccess={handleScanSuccess}
       />

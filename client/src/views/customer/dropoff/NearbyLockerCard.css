@@ -78,17 +78,22 @@
   display: block;
 }
 
-/* Pin Anchor on Central Mall */
+/* Pin Anchor on Map */
 .map-pin-anchor {
   position: absolute;
-  top: 50%;
-  left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  pointer-events: none; /* Allows dragging through the pin */
   z-index: 5;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+
+.map-pin-anchor:hover {
+  transform: translate(-50%, -55%) scale(1.05);
 }
 
 /* Pulsing Radar Ring */
@@ -119,29 +124,87 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 9999px;
-  background: linear-gradient(135deg, var(--brand-orange) 0%, #c2410c 100%);
-  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.pin-icon-circle.pin-active {
+  background: linear-gradient(135deg, var(--brand-orange) 0%, #c2410c 100%);
+  color: #ffffff;
   box-shadow: 0 4px 12px rgba(234, 88, 12, 0.45);
   border: 2.5px solid #ffffff;
+}
+
+.pin-icon-circle.pin-inactive {
+  background: #ffffff;
+  color: var(--slate-600);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+  border: 2px solid var(--slate-300);
 }
 
 .mall-name-pill {
   position: relative;
   z-index: 2;
-  background-color: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(6px);
   padding: 0.3rem 0.65rem;
   border-radius: 8px;
-  font-size: 0.75rem;
+  font-size: 0.71875rem;
   font-weight: 700;
-  color: var(--slate-900);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  border: 1px solid var(--slate-200);
   white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.mall-name-pill.pill-active {
+  background-color: rgba(255, 255, 255, 0.98);
+  color: var(--slate-900);
+  border: 1.5px solid #fed7aa;
+  box-shadow: 0 3px 8px rgba(234, 88, 12, 0.2);
+}
+
+.mall-name-pill.pill-inactive {
+  background-color: rgba(255, 255, 255, 0.88);
+  color: var(--slate-600);
+  border: 1px solid var(--slate-200);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Station Switcher Strip */
+.station-selector-strip {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.station-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--slate-200);
+  background-color: var(--slate-50);
+  color: var(--slate-600);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.station-toggle-btn:hover {
+  border-color: var(--slate-300);
+  background-color: #ffffff;
+}
+
+.station-toggle-btn.toggle-active {
+  border-color: var(--brand-orange);
+  background-color: var(--brand-orange-light);
+  color: var(--brand-orange);
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.15);
 }
 
 /* District Tag (Fixed Overlay on Top-Left) */

@@ -11,6 +11,7 @@ export function CameraScannerModal(props) {
   const isOpen = props.isOpen;
   const onClose = props.onClose;
   const onScanSuccess = props.onScanSuccess;
+  const stationData = props.stationData;
 
   // ============================================================================
   // REACT STATE (useState) explained in Vanilla JS:
@@ -39,13 +40,30 @@ export function CameraScannerModal(props) {
   // ============================================================================
   // FUNCTION: handleSkipQR
   // Bypasses QR camera decoding and immediately triggers the onScanSuccess callback.
+  // Uses selected station info if provided from NearbyLockerCard.
   // ============================================================================
   function handleSkipQR() {
     setIsScanning(false);
+    let targetStationId = 'CMH-01';
+    let targetStationName = 'Central Mall Hub (Level 1 East)';
+    let targetBox = '03';
+
+    if (stationData) {
+      if (stationData.id) {
+        targetStationId = stationData.id;
+      }
+      if (stationData.name) {
+        targetStationName = stationData.name;
+      }
+      if (stationData.assignedBox) {
+        targetBox = stationData.assignedBox;
+      }
+    }
+
     onScanSuccess({
-      stationId: 'CMH-01',
-      stationName: 'Central Mall Hub (Level 1 East)',
-      assignedBox: '03',
+      stationId: targetStationId,
+      stationName: targetStationName,
+      assignedBox: targetBox,
       size: 'Medium Box (Wash & Fold)',
     });
   }

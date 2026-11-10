@@ -163,9 +163,19 @@ Returns locker stations in proximity with compartment availability.
       {
         "stationId": "CMH-01",
         "name": "Central Mall Hub",
-        "distance": "250m",
-        "availableCompartments": 12,
-        "totalCompartments": 16,
+        "subInfo": "Open 24 hours · Level 1, east entrance",
+        "distance": "0.4 km away",
+        "availability": "4 small, 2 large available",
+        "assignedBox": "03",
+        "isOnline": true
+      },
+      {
+        "stationId": "ACH-02",
+        "name": "Ayala Commercial Kiosk",
+        "subInfo": "Open 6 AM - 11 PM · Ground floor lobby",
+        "distance": "0.6 km away",
+        "availability": "3 small, 3 medium available",
+        "assignedBox": "05",
         "isOnline": true
       }
     ]
@@ -274,7 +284,24 @@ The React client is architected so that the backend developer only needs to modi
 | `client/src/context/AuthContext.jsx` -> `signupCustomer(name, phone)` | Local `useState` | `POST /api/auth/signup` |
 | `client/src/context/AuthContext.jsx` -> `loginAsCustomer()` | Hardcoded Jamie Davis | `POST /api/auth/signin` |
 | `client/src/context/AuthContext.jsx` -> `createOrder(orderData)` | Local memory calculation | `POST /api/orders` |
+| `client/src/views/customer/dropoff/NearbyLockerCard.jsx` | Static `NEARBY_STATIONS` list | `GET /api/lockers/nearby` |
 | `client/src/views/customer/tracker/ActiveOrderCard.jsx` | Local step simulation | `GET /api/orders/active` & `POST /api/orders/:id/pay` |
+
+### 4.1 Stage 4: Locker Delivery Complete & Bill Breakdown Mapping
+
+When an order reaches Stage 4 (`ready_for_pickup`), `ActiveOrderCard.jsx` expects the following fields from the `activeOrder` JSON:
+
+| UI Element in Card | Frontend Field Read | Backend JSON Field | Example Value | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Locker Box Number** | `activeOrder.pickupBoxNumber` | `pickupBoxNumber` | `"06"` | The compartment where clean clothes were placed |
+| **Verified Weight** | `activeOrder.weightKg` | `weightKg` | `5.2` | Scale weight verified at laundry facility |
+| **Service Name** | `activeOrder.serviceType` | `serviceType` | `"Wash & Dry"` | Selected wash tier |
+| **Softener Care** | `activeOrder.fabricSoftener` | `fabricSoftener` | `true` | Boolean flag; renders softener row if true |
+| **Total Amount Due** | `activeOrder.priceEstimate` | `finalAmountDue` or `priceEstimate` | `337.00` | Total bill in Philippine Pesos (PHP) |
+| **Payment Status** | `isPaid` state | `isPaid` | `false` -> `true` | Switches from bill invoice to claim PIN view |
+| **Claim PIN** | `activeOrder.claimPin` | `claimPin` | `"842019"` | 6-digit PIN used at locker kiosk touch screen |
+
+The frontend helper `getBillBreakdown(order)` automatically handles rate-per-kg math and conditional line items, so the backend only needs to return standard numbers and booleans.
 
 ---
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useAuth } from '../../../context/AuthContext';
 import { 
   QrCode, 
   ArrowUpRight, 
@@ -12,37 +13,110 @@ import {
 import './NearbyLockerCard.css';
 
 // ==============================================================================
+// NEARBY STATIONS CATALOG
+// Static data for smart locker stations in the vicinity
+// ==============================================================================
+const NEARBY_STATIONS = [
+  {
+    id: 'CMH-01',
+    name: 'Central Mall Hub',
+    subInfo: 'Open 24 hours · Level 1, east entrance',
+    distance: '0.4 km away',
+    availability: '4 small, 2 large available',
+    assignedBox: '03',
+  },
+  {
+    id: 'ACH-02',
+    name: 'Ayala Commercial Kiosk',
+    subInfo: 'Open 6 AM - 11 PM · Ground floor lobby',
+    distance: '0.6 km away',
+    availability: '3 small, 3 medium available',
+    assignedBox: '05',
+  },
+];
+
+// Helper function: returns active station object based on ID
+function getActiveStation(stationId) {
+  if (stationId === 'ACH-02') {
+    return NEARBY_STATIONS[1];
+  }
+  return NEARBY_STATIONS[0];
+}
+
+// Helper function: determines pin icon circle CSS class
+function getPinCircleClass(stationId, activeId) {
+  if (stationId === activeId) {
+    return 'pin-icon-circle pin-active';
+  }
+  return 'pin-icon-circle pin-inactive';
+}
+
+// Helper function: determines pin label pill CSS class
+function getPinPillClass(stationId, activeId) {
+  if (stationId === activeId) {
+    return 'mall-name-pill pill-active';
+  }
+  return 'mall-name-pill pill-inactive';
+}
+
+// Helper function: determines station selector button CSS class
+function getStationToggleBtnClass(stationId, activeId) {
+  if (stationId === activeId) {
+    return 'station-toggle-btn toggle-active';
+  }
+  return 'station-toggle-btn';
+}
+
+// ==============================================================================
 // REACT COMPONENT: NearbyLockerCard
-// Displays the interactive minimap (zoomable & draggable) for the nearby locker,
-// locker compartment availability, and the camera scanner trigger button.
+// Displays the interactive minimap (zoomable & draggable) with multiple nearby
+// locker stations, availability counters, and the drop-off scanner trigger.
 // ==============================================================================
 export function NearbyLockerCard(props) {
   // In Vanilla JS: function argument 'onOpenScanner'.
   // In React: passed down from CustomerView as props.onOpenScanner.
   const onOpenScanner = props.onOpenScanner;
 
+  // useAuth() to synchronize the selected active station with the top navigation header
+  const auth = useAuth();
+
   // ============================================================================
   // LOCAL STATE (useState) explained in Vanilla JS:
   // In Vanilla JS:
   //   let zoom = 1.0;
   //   let pan = { x: 0, y: 0 };
-  //   function updateTransform() {
-  //     mapInner.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
-  //   }
+  //   let selectedStationId = 'CMH-01';
   // In React:
-  //   React re-renders the component and applies inline styles automatically.
+  //   Calling state setters tells React to automatically re-render the view.
   // ============================================================================
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedStationId, setSelectedStationId] = useState('CMH-01');
   const dragStartRef = useRef({ x: 0, y: 0, startPanX: 0, startPanY: 0 });
+
+  // Currently active station data
+  const activeStation = getActiveStation(selectedStationId);
+
+  // ----------------------------------------------------------------------------
+  // STATION SELECTION HANDLER
+  // ----------------------------------------------------------------------------
+  function handleSelectStation(station, e) {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    setSelectedStationId(station.id);
+    if (auth && auth.setActiveLocation) {
+      auth.setActiveLocation(station.name);
+    }
+  }
 
   // ----------------------------------------------------------------------------
   // MAP ZOOM HANDLERS
   // ----------------------------------------------------------------------------
   function handleZoomIn(e) {
     e.stopPropagation();
-    setZoom((prevZoom) => {
+    setZoom(function (prevZoom) {
       const next = prevZoom + 0.35;
       if (next > 2.5) {
         return 2.5;
@@ -53,7 +127,7 @@ export function NearbyLockerCard(props) {
 
   function handleZoomOut(e) {
     e.stopPropagation();
-    setZoom((prevZoom) => {
+    setZoom(function (prevZoom) {
       const next = prevZoom - 0.35;
       if (next < 0.85) {
         return 0.85;
@@ -72,7 +146,6 @@ export function NearbyLockerCard(props) {
   // MOUSE DRAG HANDLERS (Pan)
   // ----------------------------------------------------------------------------
   function handleMouseDown(e) {
-    // Only allow left click dragging
     if (e.button !== 0) return;
     setIsDragging(true);
     dragStartRef.current = {
@@ -98,7 +171,7 @@ export function NearbyLockerCard(props) {
   }
 
   // ----------------------------------------------------------------------------
-  // TOUCH DRAG HANDLERS (For Mobile Phones)
+  // TOUCH DRAG HANDLERS (Mobile Phones)
   // ----------------------------------------------------------------------------
   function handleTouchStart(e) {
     if (e.touches.length === 1) {
@@ -132,21 +205,25 @@ export function NearbyLockerCard(props) {
   function handleWheel(e) {
     e.preventDefault();
     if (e.deltaY < 0) {
-      setZoom((prev) => Math.min(prev + 0.15, 2.5));
+      setZoom(function (prev) { return Math.min(prev + 0.15, 2.5); });
     } else {
-      setZoom((prev) => Math.max(prev - 0.15, 0.85));
+      setZoom(function (prev) { return Math.max(prev - 0.15, 0.85); });
     }
   }
 
-  // ----------------------------------------------------------------------------
-  // OPEN EXTERNAL NAVIGATION
-  // Only called when the user explicitly clicks "Open Navigation"
-  // ----------------------------------------------------------------------------
+  // External Navigation Trigger
   function handleOpenNavigationClick(e) {
     if (e && e.stopPropagation) {
       e.stopPropagation();
     }
-    window.open('https://www.google.com/maps/search/?api=1&query=Central+Mall+Makati', '_blank');
+    window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(activeStation.name + ' Makati'), '_blank');
+  }
+
+  // Trigger Scanner Modal with the currently selected station data
+  function handleScanClick() {
+    if (onOpenScanner) {
+      onOpenScanner(activeStation);
+    }
   }
 
   function getMapContainerClass() {
@@ -164,7 +241,7 @@ export function NearbyLockerCard(props) {
       {/* ------------------------------------------------------------- */}
       <div className="section-headline-bar">
         <span>Nearby Smart Locker</span>
-        <span className="distance-subtag">0.4 km away</span>
+        <span className="distance-subtag">{activeStation.distance}</span>
       </div>
 
       {/* ------------------------------------------------------------- */}
@@ -217,9 +294,8 @@ export function NearbyLockerCard(props) {
 
               {/* City Blocks (Buildings) */}
               <rect x="230" y="30" width="90" height="70" rx="8" fill="#e2e8f0" />
-              <rect x="350" y="40" width="100" height="60" rx="8" fill="#e2e8f0" />
               <rect x="80" y="170" width="110" height="60" rx="8" fill="#e2e8f0" />
-              <rect x="440" y="140" width="110" height="80" rx="8" fill="#e2e8f0" />
+              <rect x="450" y="140" width="110" height="80" rx="8" fill="#e2e8f0" />
 
               {/* Secondary Streets */}
               <path d="M-20,80 L620,80" stroke="#ffffff" strokeWidth="12" />
@@ -241,11 +317,23 @@ export function NearbyLockerCard(props) {
               <text x="210" y="270" fill="#94a3b8" fontSize="8" fontWeight="600">
                 MAKATI AVE
               </text>
-              <text x="370" y="70" fill="#94a3b8" fontSize="8" fontWeight="600">
+
+              {/* Station 2 Building Footprint (Ayala Commercial Hub) */}
+              <rect 
+                x="350" 
+                y="35" 
+                width="120" 
+                height="70" 
+                rx="12" 
+                fill="#eff6ff" 
+                stroke="#bfdbfe" 
+                strokeWidth="2" 
+              />
+              <text x="365" y="58" fill="#0369a1" fontSize="9" fontWeight="700">
                 Commercial Hub
               </text>
 
-              {/* Central Mall Complex Footprint */}
+              {/* Station 1 Building Footprint (Central Mall Complex) */}
               <rect 
                 x="250" 
                 y="105" 
@@ -258,19 +346,46 @@ export function NearbyLockerCard(props) {
               />
             </svg>
 
-            {/* Destination Pin on Central Mall */}
-            <div className="map-pin-anchor">
-              {/* Radar pulse wave effect */}
-              <div className="pin-radar-ring"></div>
+            {/* --------------------------------------------------------- */}
+            {/* PIN 1: Central Mall Hub (Positioned at 50%, 50%)          */}
+            {/* --------------------------------------------------------- */}
+            <div 
+              onClick={function (e) { handleSelectStation(NEARBY_STATIONS[0], e); }}
+              className="map-pin-anchor"
+              style={{ top: '50%', left: '50%' }}
+              title="Select Central Mall Hub"
+            >
+              {selectedStationId === 'CMH-01' && <div className="pin-radar-ring"></div>}
               
-              <div className="pin-icon-circle">
-                <Box size={16} />
+              <div className={getPinCircleClass('CMH-01', selectedStationId)}>
+                <Box size={15} />
               </div>
               
-              <span className="mall-name-pill">
+              <span className={getPinPillClass('CMH-01', selectedStationId)}>
                 Central Mall Hub
               </span>
             </div>
+
+            {/* --------------------------------------------------------- */}
+            {/* PIN 2: Ayala Commercial Kiosk (Positioned at 28%, 68%)    */}
+            {/* --------------------------------------------------------- */}
+            <div 
+              onClick={function (e) { handleSelectStation(NEARBY_STATIONS[1], e); }}
+              className="map-pin-anchor"
+              style={{ top: '28%', left: '68%' }}
+              title="Select Ayala Commercial Kiosk"
+            >
+              {selectedStationId === 'ACH-02' && <div className="pin-radar-ring"></div>}
+              
+              <div className={getPinCircleClass('ACH-02', selectedStationId)}>
+                <Box size={15} />
+              </div>
+              
+              <span className={getPinPillClass('ACH-02', selectedStationId)}>
+                Ayala Commercial Kiosk
+              </span>
+            </div>
+
           </div>
 
           {/* District Tag (Fixed Overlay) */}
@@ -309,7 +424,6 @@ export function NearbyLockerCard(props) {
           </div>
 
           {/* Dedicated "Open Navigation" Button (Fixed Overlay) */}
-          {/* Only this triggers external map redirection! */}
           <button 
             type="button"
             onClick={handleOpenNavigationClick}
@@ -323,13 +437,35 @@ export function NearbyLockerCard(props) {
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* STATION DETAILS                                               */}
+        {/* STATION DETAILS & SELECTOR                                    */}
         {/* ------------------------------------------------------------- */}
         <div className="station-card-body">
+          
+          {/* Station Switcher Strip */}
+          <div className="station-selector-strip">
+            <button
+              type="button"
+              onClick={function (e) { handleSelectStation(NEARBY_STATIONS[0], e); }}
+              className={getStationToggleBtnClass('CMH-01', selectedStationId)}
+            >
+              <Box size={13} />
+              <span>Central Mall Hub</span>
+            </button>
+            <button
+              type="button"
+              onClick={function (e) { handleSelectStation(NEARBY_STATIONS[1], e); }}
+              className={getStationToggleBtnClass('ACH-02', selectedStationId)}
+            >
+              <Box size={13} />
+              <span>Ayala Commercial Kiosk</span>
+            </button>
+          </div>
+
+          {/* Station Title Row */}
           <div className="station-title-row">
             <div>
-              <h3 className="station-main-title">Central Mall Hub</h3>
-              <p className="station-sub-info">Open 24 hours · Level 1, east entrance</p>
+              <h3 className="station-main-title">{activeStation.name}</h3>
+              <p className="station-sub-info">{activeStation.subInfo}</p>
             </div>
             <button 
               type="button"
@@ -347,16 +483,15 @@ export function NearbyLockerCard(props) {
               <div className="avail-icon-box">
                 <Box size={14} />
               </div>
-              <span>4 small, 2 large available</span>
+              <span>{activeStation.availability}</span>
             </div>
             <span className="live-green-dot"></span>
           </div>
 
           {/* Primary Action Button: Opens Camera Scanner */}
-          {/* Updated text: Removed "At the locker?" */}
           <button
             type="button"
-            onClick={onOpenScanner}
+            onClick={handleScanClick}
             className="scan-drop-cta-btn"
           >
             <div className="btn-left-icon-group">

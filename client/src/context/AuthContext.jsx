@@ -24,6 +24,9 @@ export function AuthProvider(props) {
   // Global State for the active laundry order (null = no order currently)
   const [activeOrder, setActiveOrder] = useState(null);
 
+  // Global State for the active locker station/location
+  const [activeLocation, setActiveLocation] = useState('Central Mall Hub');
+
   // Logs in as a guest (optionally with Name & Phone provided via Guest Modal)
   // In Vanilla JS: window.appState.user = { name, initials, phone, role: 'guest' };
   function loginAsGuest(guestName, guestPhone) {
@@ -180,6 +183,8 @@ export function AuthProvider(props) {
   const contextValue = {
     user: user,
     activeOrder: activeOrder,
+    activeLocation: activeLocation,
+    setActiveLocation: setActiveLocation,
     loginAsGuest: loginAsGuest,
     loginAsCustomer: loginAsCustomer,
     signupCustomer: signupCustomer,

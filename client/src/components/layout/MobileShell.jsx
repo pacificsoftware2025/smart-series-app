@@ -28,15 +28,18 @@ export function MobileShell(props) {
   let userName = 'Guest';
   let userLocation = 'Central Mall Hub';
 
+  if (auth && auth.activeLocation) {
+    userLocation = auth.activeLocation;
+  } else if (user && user.location) {
+    userLocation = user.location;
+  }
+
   if (user) {
     if (user.initials) {
       userInitials = user.initials;
     }
     if (user.name) {
       userName = user.name;
-    }
-    if (user.location) {
-      userLocation = user.location;
     }
   }
 
