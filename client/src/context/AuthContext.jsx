@@ -24,21 +24,47 @@ export function AuthProvider(props) {
   // Global State for the active laundry order (null = no order currently)
   const [activeOrder, setActiveOrder] = useState(null);
 
-  // Logs in as a guest
-  function loginAsGuest() {
+  // Logs in as a guest (optionally with Name & Phone provided via Guest Modal)
+  // In Vanilla JS: window.appState.user = { name, initials, phone, role: 'guest' };
+  function loginAsGuest(guestName, guestPhone) {
+    let nameToUse = 'Guest User';
+    if (guestName && guestName.trim().length > 0) {
+      nameToUse = guestName.trim();
+    }
+
+    let phoneToUse = '9XX XXX XXXX';
+    if (guestPhone && guestPhone.trim().length > 0) {
+      phoneToUse = guestPhone.trim();
+    }
+
+    let initials = 'GU';
+    const parts = nameToUse.split(' ');
+    if (parts.length >= 2) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (nameToUse.length >= 2) {
+      initials = nameToUse.substring(0, 2).toUpperCase();
+    }
+
     setUser({
-      name: 'Guest User',
-      initials: 'GU',
+      name: nameToUse,
+      initials: initials,
+      phone: phoneToUse,
       role: ROLES.GUEST,
       location: 'Central Mall Hub',
     });
   }
 
-  // Logs in as verified customer Jamie Davis
-  function loginAsCustomer() {
+  // Logs in as verified customer Jamie Davis (or with phone provided from Sign-In)
+  function loginAsCustomer(customerPhone) {
+    let phoneToUse = '917 000 0000';
+    if (customerPhone && customerPhone.trim().length > 0) {
+      phoneToUse = customerPhone.trim();
+    }
+
     setUser({
       name: 'Jamie Davis',
       initials: 'JD',
+      phone: phoneToUse,
       role: ROLES.CUSTOMER,
       location: 'Central Mall Hub',
     });

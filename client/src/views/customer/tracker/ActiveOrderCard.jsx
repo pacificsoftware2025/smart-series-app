@@ -1,41 +1,70 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { Clock, CheckCircle2, Sparkles, ShieldAlert, Truck, Lock, CreditCard, Key } from 'lucide-react';
+import { Clock, CheckCircle2, Sparkles, ShieldCheck, Truck, Lock, CreditCard, Key, PackageCheck, AlertCircle } from 'lucide-react';
 import './ActiveOrderCard.css';
 
 // ==============================================================================
-// HELPER FUNCTIONS (Vanilla JS Logic)
+// HELPER FUNCTIONS (Vanilla JavaScript Logic)
 // In Vanilla JS, you use standard if/else statements instead of nested ternaries.
-// This fulfills Rule 1: "A 5-line readable solution is better than a 1-line expression."
+// This directly adheres to Rule 1: "A 5-line readable solution is infinitely better
+// than a clever 1-line expression."
 // ==============================================================================
 
 // Determines the CSS class for each circle in the 4-step progress stepper.
 function getStepCircleClass(stepNumber, activeStep, isPaid) {
-  // If we are at Step 4 and already paid, Step 4 is complete.
   if (stepNumber === 4 && isPaid) {
-    return 'stepper-circle step-done';
+    return 'stepper-node-circle circle-completed';
   }
-  // If the step is already passed, it gets the green 'done' style.
   if (stepNumber < activeStep) {
-    return 'stepper-circle step-done';
+    return 'stepper-node-circle circle-completed';
   }
-  // If this step is currently in progress, it gets the orange active style.
   if (stepNumber === activeStep) {
-    return 'stepper-circle step-current';
+    return 'stepper-node-circle circle-active';
   }
-  // Otherwise, it's pending (gray).
-  return 'stepper-circle step-pending';
+  return 'stepper-node-circle circle-pending';
 }
 
-// Determines the CSS class for the step title text.
-function getStepTitleClass(stepNumber, activeStep) {
-  if (stepNumber === activeStep) {
-    return 'step-title step-current-text';
+// Determines the CSS class for the step label text.
+function getStepLabelClass(stepNumber, activeStep, isPaid) {
+  if (stepNumber === 4 && isPaid) {
+    return 'stepper-node-label label-completed';
   }
-  return 'step-title';
+  if (stepNumber === activeStep) {
+    return 'stepper-node-label label-active';
+  }
+  if (stepNumber < activeStep) {
+    return 'stepper-node-label label-completed';
+  }
+  return 'stepper-node-label label-pending';
 }
 
-// Determines the order headline based on current progress.
+// Calculates the width percentage for the timeline track fill bar.
+// Spans inside the bounded container from Node 1 (0%) to Node 4 (100%).
+function getTimelineProgressWidth(activeStep) {
+  if (activeStep === 1) {
+    return '0%';
+  }
+  if (activeStep === 2) {
+    return '33.33%';
+  }
+  if (activeStep === 3) {
+    return '66.67%';
+  }
+  if (activeStep === 4) {
+    return '100%';
+  }
+  return '0%';
+}
+
+// Determines the track fill CSS class based on payment status.
+function getTrackFillClass(activeStep, isPaid) {
+  if (activeStep === 4 && isPaid) {
+    return 'stepper-track-fill fill-all-completed';
+  }
+  return 'stepper-track-fill';
+}
+
+// Determines the headline title displayed at the top of the order card.
 function getOrderHeadline(activeStep, isPaid) {
   if (activeStep === 1) {
     return 'Dropped Off in Locker';
@@ -44,108 +73,145 @@ function getOrderHeadline(activeStep, isPaid) {
     return 'Rider Collected Laundry';
   }
   if (activeStep === 3) {
-    return 'Wash Day, Underway';
+    return 'Wash & Dry in Progress';
   }
   if (activeStep === 4) {
     if (isPaid) {
-      return 'Ready for Pickup!';
+      return 'Ready for Collection';
     }
     return 'Delivered & Payment Due';
   }
-  return 'Wash Day, Underway';
+  return 'Order in Progress';
 }
 
-// Determines the in-progress status pill text without nested ternaries
-function getStatusPillText(step, paid) {
-  if (step === 4) {
-    if (paid) {
+// Determines the status badge text at the top right.
+function getStatusBadgeText(activeStep, isPaid) {
+  if (activeStep === 4) {
+    if (isPaid) {
       return 'Ready';
     }
-    return 'Payment';
+    return 'Payment Due';
   }
   return 'In Progress';
 }
 
-// Determines payment method button CSS class
-function getPayMethodClass(method, selected) {
-  if (method === selected) {
-    return 'pay-method-btn selected-method';
+// Determines the CSS class for the status badge chip.
+function getStatusBadgeClass(activeStep, isPaid) {
+  if (activeStep === 4) {
+    if (isPaid) {
+      return 'live-status-badge badge-ready';
+    }
+    return 'live-status-badge badge-payment';
   }
-  return 'pay-method-btn';
+  return 'live-status-badge badge-progress';
 }
 
-// Determines dev simulator button CSS class
+// Determines the CSS class for water temperature spec badge.
+function getTemperatureBadgeClass(temp) {
+  if (temp && temp.indexOf('Warm') !== -1) {
+    return 'spec-badge-chip temp-warm-chip';
+  }
+  return 'spec-badge-chip temp-cold-chip';
+}
+
+// Determines the CSS class for fabric softener spec badge.
+function getSoftenerBadgeClass(hasSoftener) {
+  if (hasSoftener) {
+    return 'spec-badge-chip softener-yes-chip';
+  }
+  return 'spec-badge-chip softener-no-chip';
+}
+
+// Determines the readable text for fabric softener.
+function getFabricSoftenerText(hasSoftener) {
+  if (hasSoftener) {
+    return 'Softener Added';
+  }
+  return 'No Softener';
+}
+
+// Determines payment method button CSS class.
+function getPayMethodClass(method, selectedMethod) {
+  if (method === selectedMethod) {
+    return 'pay-method-card selected-pay-method';
+  }
+  return 'pay-method-card';
+}
+
+// Determines developer simulator button CSS class.
 function getDevStepBtnClass(stepNumber, activeStep) {
   if (stepNumber === activeStep) {
-    return 'dev-state-btn active-dev-state';
+    return 'dev-sim-btn dev-sim-active';
   }
-  return 'dev-state-btn';
+  return 'dev-sim-btn';
 }
 
-// Determines Yes/No label for fabric softener
-function getFabricSoftenerLabel(hasSoftener) {
-  if (hasSoftener) {
-    return 'Yes';
+// Formats a numeric price into a 2-decimal string.
+function formatPrice(amount) {
+  if (typeof amount === 'number') {
+    return amount.toFixed(2);
   }
-  return 'No';
+  return '337.00';
 }
 
-// Determines if step 3 sparkle icon should spin
-function getStep3SparkleClass(step) {
-  if (step === 3) {
-    return 'animate-spin';
+// Checks if special instructions are provided.
+function hasValidInstructions(notes) {
+  if (!notes) {
+    return false;
   }
-  return '';
-}
-
-// Determines meta text for Step 4
-function getStep4Meta(paid) {
-  if (paid) {
-    return 'Box #06';
+  if (notes.trim() === '') {
+    return false;
   }
-  return 'PIN on Pay';
+  if (notes.trim().toLowerCase() === 'none') {
+    return false;
+  }
+  return true;
 }
 
 // ==============================================================================
 // REACT COMPONENT: ActiveOrderCard
-// Think of this component as a JavaScript function that takes data (props)
-// and returns the HTML layout to display on screen.
+// In Vanilla JS: A function that takes data and returns an HTML string / DOM tree.
+// In React: When state changes via setState(), React calls this function again
+// to re-compute and update only the modified DOM elements.
 // ==============================================================================
 export function ActiveOrderCard(props) {
   // Props are function arguments passed by the parent component (CustomerView).
   const onSwitchToDropoff = props.onSwitchToDropoff;
 
-  // useAuth() connects to our global user state.
+  // useAuth() connects to our global user and order state in AuthContext.
   const auth = useAuth();
   const activeOrder = auth.activeOrder;
 
   // ============================================================================
   // REACT STATE (useState) explained in Vanilla JS:
-  // In Vanilla JS: let currentStep = 3;
-  // In React: calling setCurrentStep(newVal) updates the value AND tells React
-  // to re-run this function to automatically re-render the HTML on screen.
+  // In Vanilla JS:
+  //   let currentStep = 1;
+  //   let selectedPayment = 'GCash';
+  //   let isPaid = false;
+  // In React:
+  //   Calling setCurrentStep(newStep) updates the variable AND instructs React
+  //   to re-render this component automatically.
   // ============================================================================
-  const [currentStep, setCurrentStep] = useState(3); // 1 = Dropped, 2 = Rider, 3 = Wash, 4 = Deliver/Pay
+  const [currentStep, setCurrentStep] = useState(1); // 1 = Dropped, 2 = Transit, 3 = Wash, 4 = Ready/Pay
   const [selectedPayment, setSelectedPayment] = useState('GCash'); // Currently selected payment method
-  const [isPaid, setIsPaid] = useState(false); // Tracks if Step 4 has been paid
+  const [isPaid, setIsPaid] = useState(false); // Tracks if Step 4 invoice has been paid
 
   // In Vanilla JS: if (!activeOrder) { container.innerHTML = '...'; return; }
-  // In React: if no active order exists, we return the Empty State HTML early.
+  // In React: if no active order exists, we return the Empty State view early.
   if (!activeOrder) {
     return (
-      <div className="empty-order-card">
-        <div className="empty-icon-bubble">
-          <Clock size={28} />
+      <div className="empty-tracker-card">
+        <div className="empty-tracker-icon">
+          <Clock size={32} />
         </div>
-        <div>
-          <h3 className="empty-title">No Active Laundry Order</h3>
-          <p className="empty-desc">
-            You don't have any clothes in wash right now. Head over to the Nearby Locker tab to drop off your laundry!
+        <div className="empty-tracker-content">
+          <h3 className="empty-tracker-title">No Active Laundry Order</h3>
+          <p className="empty-tracker-desc">
+            You don't have any clothes in wash right now. Head over to the Nearby Locker tab to drop off your laundry bag.
           </p>
         </div>
-        {/* In React, onClick={fn} behaves like button.onclick = fn in Vanilla JS */}
-        <button onClick={onSwitchToDropoff} className="empty-action-btn">
-          Go to Nearby Locker →
+        <button onClick={onSwitchToDropoff} className="empty-tracker-btn">
+          Go to Nearby Locker
         </button>
       </div>
     );
@@ -153,279 +219,351 @@ export function ActiveOrderCard(props) {
 
   // Event handler for paying the invoice at Step 4.
   function handlePayAndUnlockClick() {
-    setIsPaid(true); // Updates isPaid state to true, causing the screen to show the PIN box
+    setIsPaid(true); // Switches isPaid to true, triggering React to show the PIN claim pass.
   }
 
   // Event handler for simulating manual locker door opening after payment.
   function handleOpenLockerDoorClick() {
-    alert("⚡ Solenoid Relay Actuated! Locker Box #06 is now OPEN. Please retrieve your clean laundry.");
+    alert("Solenoid Relay Actuated: Locker Box #06 is now UNLOCKED. Please retrieve your clean laundry.");
   }
 
+  // Determine price and weight values from verified order data
+  let displayPrice = '337.00';
+  if (activeOrder.priceEstimate) {
+    displayPrice = formatPrice(activeOrder.priceEstimate);
+  }
+
+  let displayWeight = '5.2';
+  if (activeOrder.weightKg) {
+    displayWeight = activeOrder.weightKg;
+  }
+
+  // Check if special instructions exist
+  const showSpecialNotes = hasValidInstructions(activeOrder.specialInstructions);
+
   return (
-    <div className="active-order-wrapper">
-      <div className="active-order-main-card">
+    <div className="active-tracker-container">
+      
+      {/* ------------------------------------------------------------- */}
+      {/* DEV STAGE SIMULATOR (Subtle Developer Toolbar at the Top)     */}
+      {/* ------------------------------------------------------------- */}
+      <div className="dev-simulator-bar">
+        <div className="dev-simulator-label">
+          <span>Simulation Preview:</span>
+        </div>
+        <div className="dev-simulator-buttons">
+          <button
+            type="button"
+            onClick={function () { setCurrentStep(1); setIsPaid(false); }}
+            className={getDevStepBtnClass(1, currentStep)}
+          >
+            1. Dropped
+          </button>
+          <button
+            type="button"
+            onClick={function () { setCurrentStep(2); setIsPaid(false); }}
+            className={getDevStepBtnClass(2, currentStep)}
+          >
+            2. Transit
+          </button>
+          <button
+            type="button"
+            onClick={function () { setCurrentStep(3); setIsPaid(false); }}
+            className={getDevStepBtnClass(3, currentStep)}
+          >
+            3. In Wash
+          </button>
+          <button
+            type="button"
+            onClick={function () { setCurrentStep(4); setIsPaid(false); }}
+            className={getDevStepBtnClass(4, currentStep)}
+          >
+            4. Ready
+          </button>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* HERO STATUS PASS (Clean, Elevated Consumer Ticket Card)       */}
+      {/* ------------------------------------------------------------- */}
+      <div className="order-ticket-card">
         
-        {/* ------------------------------------------------------------- */}
-        {/* DEV STAGE SIMULATOR (Quick buttons to preview all 4 steps)     */}
-        {/* ------------------------------------------------------------- */}
-        <div>
-          <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--slate-400)', textTransform: 'uppercase', marginBottom: '4px' }}>
-            🧪 Dev Stage Simulator (Click to preview each step):
-          </p>
-          <div className="dev-state-switcher">
-            <button
-              onClick={() => { setCurrentStep(1); setIsPaid(false); }}
-              className={getDevStepBtnClass(1, currentStep)}
-            >
-              1. Dropped Off
-            </button>
-            <button
-              onClick={() => { setCurrentStep(2); setIsPaid(false); }}
-              className={getDevStepBtnClass(2, currentStep)}
-            >
-              2. Rider Pickup
-            </button>
-            <button
-              onClick={() => { setCurrentStep(3); setIsPaid(false); }}
-              className={getDevStepBtnClass(3, currentStep)}
-            >
-              3. In Wash
-            </button>
-            <button
-              onClick={() => { setCurrentStep(4); setIsPaid(false); }}
-              className={getDevStepBtnClass(4, currentStep)}
-            >
-              4. Deliver & Pay
-            </button>
+        {/* Header Row: Order ID, Timestamp & Live Pulsing Badge */}
+        <div className="order-ticket-header">
+          <div className="order-reference-group">
+            <span className="order-ticket-id">
+              Order #{activeOrder.id}
+            </span>
+            <span className="order-ticket-time">
+              {activeOrder.createdAt}
+            </span>
+          </div>
+
+          <div className={getStatusBadgeClass(currentStep, isPaid)}>
+            <span className="live-pulse-dot"></span>
+            <span>{getStatusBadgeText(currentStep, isPaid)}</span>
+          </div>
+        </div>
+
+        {/* Headline & ETA Banner */}
+        <div className="order-ticket-headline-block">
+          <h2 className="order-ticket-title">
+            {getOrderHeadline(currentStep, isPaid)}
+          </h2>
+          <div className="order-ticket-eta">
+            <Clock size={14} className="eta-icon" />
+            <span>Est. Ready: <strong>{activeOrder.estimatedReady}</strong></span>
           </div>
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* ORDER HEADLINE ROW                                            */}
+        {/* CONNECTED 4-STEP TIMELINE TRACK                               */}
         {/* ------------------------------------------------------------- */}
-        <div className="order-headline-row">
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="order-id-badge">
-                Order #{activeOrder.id}
-              </span>
-              <span className="order-timestamp-text">
-                {activeOrder.createdAt}
-              </span>
-            </div>
-
-            <h3 className="order-card-title">
-              {getOrderHeadline(currentStep, isPaid)}
-            </h3>
-
-            <p className="est-ready-line">
-              <Clock size={14} color="var(--brand-orange)" />
-              Est. Ready: <strong>{activeOrder.estimatedReady}</strong>
-            </p>
-          </div>
-
-          <span className="in-progress-pill">
-            {getStatusPillText(currentStep, isPaid)}
-          </span>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* 4-STEP PROGRESSION STEPPER                                    */}
-        {/* 1. Dropped Off > 2. Rider Pickup > 3. In Wash > 4. Deliver/Pay */}
-        {/* ------------------------------------------------------------- */}
-        <div className="order-stepper-grid-4">
+        <div className="stepper-timeline-wrapper">
           
-          {/* Step 1: Dropped Off */}
-          <div>
-            <div className={getStepCircleClass(1, currentStep, isPaid)}>
-              {currentStep > 1 && <CheckCircle2 size={14} />}
-              {currentStep === 1 && '1'}
+          {/* Bounded Track Container: Spans exactly from Center of Node 1 to Center of Node 4 */}
+          <div className="stepper-track-container">
+            {/* The fill bar lives INSIDE with overflow:hidden so it CANNOT overlap or shoot out */}
+            <div
+              className={getTrackFillClass(currentStep, isPaid)}
+              style={{ width: getTimelineProgressWidth(currentStep) }}
+            ></div>
+          </div>
+
+          {/* 4 Node Steps */}
+          <div className="stepper-nodes-row">
+            
+            {/* Step 1: Drop Off */}
+            <div className="stepper-node-item">
+              <div className={getStepCircleClass(1, currentStep, isPaid)}>
+                {currentStep > 1 && <CheckCircle2 size={14} />}
+                {currentStep === 1 && '1'}
+              </div>
+              <span className={getStepLabelClass(1, currentStep, isPaid)}>Drop Off</span>
+              <span className="stepper-node-sub">Box #{activeOrder.lockerNumber}</span>
             </div>
-            <p className={getStepTitleClass(1, currentStep)}>Dropped Off</p>
-            <p className="step-meta">Locker #{activeOrder.lockerNumber}</p>
-          </div>
 
-          {/* Step 2: Rider Pickup */}
-          <div>
-            <div className={getStepCircleClass(2, currentStep, isPaid)}>
-              {currentStep > 2 && <CheckCircle2 size={14} />}
-              {currentStep <= 2 && <Truck size={12} />}
+            {/* Step 2: Rider Transit */}
+            <div className="stepper-node-item">
+              <div className={getStepCircleClass(2, currentStep, isPaid)}>
+                {currentStep > 2 && <CheckCircle2 size={14} />}
+                {currentStep === 2 && <Truck size={13} />}
+                {currentStep < 2 && <Truck size={13} />}
+              </div>
+              <span className={getStepLabelClass(2, currentStep, isPaid)}>Transit</span>
+              <span className="stepper-node-sub">Van Route</span>
             </div>
-            <p className={getStepTitleClass(2, currentStep)}>Rider Pickup</p>
-            <p className="step-meta">Van In Transit</p>
-          </div>
 
-          {/* Step 3: In Wash */}
-          <div>
-            <div className={getStepCircleClass(3, currentStep, isPaid)}>
-              {currentStep > 3 && <CheckCircle2 size={14} />}
-              {currentStep <= 3 && (
-                <Sparkles size={12} className={getStep3SparkleClass(currentStep)} />
-              )}
+            {/* Step 3: In Wash */}
+            <div className="stepper-node-item">
+              <div className={getStepCircleClass(3, currentStep, isPaid)}>
+                {currentStep > 3 && <CheckCircle2 size={14} />}
+                {currentStep <= 3 && <Sparkles size={13} />}
+              </div>
+              <span className={getStepLabelClass(3, currentStep, isPaid)}>In Wash</span>
+              <span className="stepper-node-sub">Central Hub</span>
             </div>
-            <p className={getStepTitleClass(3, currentStep)}>In Wash</p>
-            <p className="step-meta">Central Hub</p>
-          </div>
 
-          {/* Step 4: Delivery & Payment */}
-          <div>
-            <div className={getStepCircleClass(4, currentStep, isPaid)}>
-              {isPaid && <CheckCircle2 size={14} />}
-              {!isPaid && '4'}
+            {/* Step 4: Deliver & Pay */}
+            <div className="stepper-node-item">
+              <div className={getStepCircleClass(4, currentStep, isPaid)}>
+                {isPaid && <CheckCircle2 size={14} />}
+                {!isPaid && <Key size={13} />}
+              </div>
+              <span className={getStepLabelClass(4, currentStep, isPaid)}>Ready</span>
+              <span className="stepper-node-sub">Box #06</span>
             </div>
-            <p className={getStepTitleClass(4, currentStep)}>Delivery & Pay</p>
-            <p className="step-meta">{getStep4Meta(isPaid)}</p>
-          </div>
 
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* ORDER DETAILS TRAY                                            */}
-        {/* ------------------------------------------------------------- */}
-        <div className="order-details-tray">
-          <div className="detail-row">
-            <span>Service Selected:</span>
-            <span className="detail-value">{activeOrder.serviceType}</span>
-          </div>
-          <div className="detail-row">
-            <span>Load Size:</span>
-            <span className="detail-value">{activeOrder.loadSize}</span>
-          </div>
-          <div className="detail-row">
-            <span>Water Temperature:</span>
-            <span className="detail-value">{activeOrder.temperature}</span>
-          </div>
-          <div className="detail-row">
-            <span>Fabric Softener:</span>
-            <span className="detail-value" style={{ color: 'var(--emerald-600)' }}>
-              {getFabricSoftenerLabel(activeOrder.fabricSoftener)}
-            </span>
-          </div>
-          <div className="detail-row" style={{ paddingTop: '4px', borderTop: '1px solid var(--slate-200)' }}>
-            <span>Special Notes:</span>
-            <span style={{ fontStyle: 'italic', maxWidth: '200px', textAlign: 'right' }}>
-              "{activeOrder.specialInstructions}"
-            </span>
           </div>
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* CONDITIONAL RENDERING (Like an if/else in Vanilla JS)         */}
-        {/* Stages 1, 2, 3: Explain why locker door is safely locked       */}
+        {/* IOT STAGE SAFEGUARD & LIVE HARDWARE STATUS CARD               */}
+        {/* Shown during Stages 1, 2, and 3 to reassure customer          */}
         {/* ------------------------------------------------------------- */}
-        {currentStep < 4 && (
-          <div className="safeguard-locked-box">
-            <ShieldAlert size={18} color="var(--amber-700)" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <p className="safeguard-heading">
-                {currentStep === 1 && `Locker Box #${activeOrder.lockerNumber} is Secured`}
-                {currentStep === 2 && 'Collected by Driver Alex (Van #4)'}
-                {currentStep === 3 && 'Washing & Folding at Central Facility'}
+        {currentStep === 1 && (
+          <div className="stage-context-box">
+            <div className="stage-context-icon icon-amber">
+              <ShieldCheck size={18} />
+            </div>
+            <div className="stage-context-body">
+              <h4 className="stage-context-title">Locker Box #{activeOrder.lockerNumber} Secured</h4>
+              <p className="stage-context-desc">
+                Your clothes are safely locked inside compartment #{activeOrder.lockerNumber}. Our route driver will collect your laundry bag for the intake route shortly.
               </p>
-              <p className="safeguard-desc">
-                {currentStep === 1 && 'Your clothes are safely inside the locker waiting for the van rider to collect for the morning route.'}
-                {currentStep === 2 && 'Your bag is loaded in the van and en route to the central facility for intake weighing.'}
-                {currentStep === 3 && 'Your garments are currently in the wash and dry cycle. Locker unlock will re-enable once the clean laundry is returned to the locker.'}
+            </div>
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className="stage-context-box">
+            <div className="stage-context-icon icon-blue">
+              <Truck size={18} />
+            </div>
+            <div className="stage-context-body">
+              <h4 className="stage-context-title">Collected by Route Driver</h4>
+              <p className="stage-context-desc">
+                Driver Alex has collected your laundry bag in Van #4 and is en route to Central Laundry Hub for precision weighing and fabric sorting.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <div className="stage-context-box">
+            <div className="stage-context-icon icon-purple">
+              <Sparkles size={18} />
+            </div>
+            <div className="stage-context-body">
+              <h4 className="stage-context-title">Washing & Folding Cycle Active</h4>
+              <p className="stage-context-desc">
+                Your garments are currently undergoing wash, dry, and professional folding according to your custom preferences at Central Laundry Hub.
               </p>
             </div>
           </div>
         )}
 
         {/* ------------------------------------------------------------- */}
-        {/* STAGE 4: DELIVERY & PAYMENT INVOICE (Before user pays)        */}
+        {/* ORDER SPECIFICATIONS & PREFERENCES CARD                       */}
+        {/* ------------------------------------------------------------- */}
+        <div className="order-specs-card">
+          <div className="specs-card-header">
+            <h4 className="specs-card-title">Order Specifications</h4>
+            <span className="specs-hub-tag">Central Hub</span>
+          </div>
+
+          <div className="specs-grid-2">
+            <div className="spec-item">
+              <span className="spec-label">Service Type:</span>
+              <span className="spec-value-strong">{activeOrder.serviceType}</span>
+            </div>
+            <div className="spec-item">
+              <span className="spec-label">Load Size:</span>
+              <span className="spec-value-strong">{activeOrder.loadSize}</span>
+            </div>
+          </div>
+
+          {/* Preferences Badges Row */}
+          <div className="specs-badges-row">
+            <span className={getTemperatureBadgeClass(activeOrder.temperature)}>
+              {activeOrder.temperature}
+            </span>
+            <span className={getSoftenerBadgeClass(activeOrder.fabricSoftener)}>
+              {getFabricSoftenerText(activeOrder.fabricSoftener)}
+            </span>
+            <span className="spec-badge-chip est-weight-chip">
+              Est. {displayWeight} kg
+            </span>
+          </div>
+
+          {/* Special Instructions Note (Shown only when present) */}
+          {showSpecialNotes && (
+            <div className="specs-note-callout">
+              <span className="notes-label">Special Notes:</span>
+              <span className="notes-content">"{activeOrder.specialInstructions}"</span>
+            </div>
+          )}
+        </div>
+
+        {/* ------------------------------------------------------------- */}
+        {/* STAGE 4: DELIVERY COMPLETE & PAYMENT INVOICE (Before Payment)  */}
         {/* ------------------------------------------------------------- */}
         {currentStep === 4 && !isPaid && (
-          <div className="billing-payment-card">
-            <div>
-              <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--brand-orange)' }}>
-                Clean Laundry Delivered to Box #06
-              </span>
-              <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--slate-900)', marginTop: '2px' }}>
-                Weighed & Invoiced Total
-              </h4>
-              <p style={{ fontSize: '11px', color: 'var(--slate-500)' }}>
-                5.2 kg Standard care @ ₱60/kg + Fabric Softener
+          <div className="checkout-invoice-card">
+            <div className="invoice-header">
+              <div className="invoice-tag">Locker Delivery Complete</div>
+              <h4 className="invoice-title">Clean Laundry Ready at Box #06</h4>
+              <p className="invoice-subtext">
+                Intake weight verified at {displayWeight} kg • Standard care package
               </p>
             </div>
 
-            <div className="billing-total-row">
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate-600)' }}>Total Due:</span>
-              <span className="billing-total-amount">₱337.00</span>
+            <div className="invoice-total-row">
+              <span className="invoice-total-label">Total Amount Due:</span>
+              <span className="invoice-total-amount">₱{displayPrice}</span>
             </div>
 
             {/* Payment Method Selector */}
-            <div className="payment-method-selector">
+            <div className="payment-options-grid">
               <button
                 type="button"
-                onClick={() => setSelectedPayment('GCash')}
+                onClick={function () { setSelectedPayment('GCash'); }}
                 className={getPayMethodClass('GCash', selectedPayment)}
               >
-                GCash
+                <span className="pay-method-name">GCash</span>
               </button>
               <button
                 type="button"
-                onClick={() => setSelectedPayment('Maya')}
+                onClick={function () { setSelectedPayment('Maya'); }}
                 className={getPayMethodClass('Maya', selectedPayment)}
               >
-                Maya
+                <span className="pay-method-name">Maya</span>
               </button>
               <button
                 type="button"
-                onClick={() => setSelectedPayment('Card')}
+                onClick={function () { setSelectedPayment('Card'); }}
                 className={getPayMethodClass('Card', selectedPayment)}
               >
-                Credit Card
+                <span className="pay-method-name">Card</span>
               </button>
             </div>
 
             <button
+              type="button"
               onClick={handlePayAndUnlockClick}
-              className="pay-unlock-cta-btn"
+              className="pay-checkout-cta-btn"
             >
-              <CreditCard size={16} />
-              <span>Pay ₱337.00 to Unlock Pickup Box #06</span>
+              <CreditCard size={18} />
+              <span>Pay ₱{displayPrice} & Unlock Box #06</span>
             </button>
           </div>
         )}
 
         {/* ------------------------------------------------------------- */}
-        {/* STAGE 4 AFTER PAYMENT: CLAIM SCREEN WITH 6-DIGIT PIN          */}
+        {/* STAGE 4: POST-PAYMENT CLAIM PASS WITH 6-DIGIT PIN             */}
         {/* ------------------------------------------------------------- */}
         {currentStep === 4 && isPaid && (
-          <div className="claim-pin-box">
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--emerald-100)', color: 'var(--emerald-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-              <Key size={20} />
+          <div className="claim-pickup-pass">
+            <div className="claim-success-icon">
+              <PackageCheck size={28} />
             </div>
-            <div>
-              <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--emerald-800)' }}>
-                Payment Received! Pick Up at Box #06
-              </h4>
-              <p style={{ fontSize: '11px', color: 'var(--emerald-700)' }}>
-                Enter this 6-digit PIN on the locker kiosk or tap to unlock:
+
+            <div className="claim-text-center">
+              <h3 className="claim-pass-title">Payment Confirmed</h3>
+              <p className="claim-pass-subtitle">
+                Your fresh, folded laundry is waiting in <strong>Locker Box #06</strong>
               </p>
             </div>
 
-            <div className="pin-digits-row">
-              <div className="pin-digit-cell">8</div>
-              <div className="pin-digit-cell">4</div>
-              <div className="pin-digit-cell">2</div>
-              <div className="pin-digit-cell">0</div>
-              <div className="pin-digit-cell">1</div>
-              <div className="pin-digit-cell">9</div>
+            {/* Monospace 6-Digit PIN Display */}
+            <div className="claim-pin-wrapper">
+              <span className="claim-pin-label">Locker Touchscreen PIN</span>
+              <div className="claim-digits-grid">
+                <div className="digit-card">8</div>
+                <div className="digit-card">4</div>
+                <div className="digit-card">2</div>
+                <div className="digit-card">0</div>
+                <div className="digit-card">1</div>
+                <div className="digit-card">9</div>
+              </div>
+              <span className="claim-pin-help">
+                Enter PIN on the locker kiosk or tap below to unlock directly
+              </span>
             </div>
 
             <button
+              type="button"
               onClick={handleOpenLockerDoorClick}
-              className="pay-unlock-cta-btn"
-              style={{ background: 'var(--emerald-600)' }}
+              className="unlock-now-cta-btn"
             >
-              <Lock size={16} />
+              <Lock size={18} />
               <span>Tap to Open Locker Box #06 Now</span>
             </button>
           </div>
         )}
 
       </div>
+
     </div>
   );
 }

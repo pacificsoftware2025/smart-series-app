@@ -7,7 +7,9 @@ import {
   Lock, 
   Box, 
   UserPlus, 
-  LogIn 
+  LogIn,
+  X,
+  AlertCircle 
 } from 'lucide-react';
 import './LoginView.css';
 
@@ -37,30 +39,140 @@ export function LoginView() {
   const [signupName, setSignupName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
 
-  // Handles Sign-In submit
+  // Validation error state for each form
+  const [signInError, setSignInError] = useState('');
+  const [signUpError, setSignUpError] = useState('');
+  const [guestError, setGuestError] = useState('');
+
+  // Guest Modal state
+  // In Vanilla JS: let isGuestModalOpen = false;
+  // In React: Calling setIsGuestModalOpen(true) tells React to re-render and display the modal dialog.
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+
+  // ============================================================================
+  // VALIDATION & SANITIZATION HELPERS (Vanilla JS logic)
+  // - Contact numbers strictly accept integers only (0-9).
+  // - Maximum length is capped at 10 digits (e.g. 9171234567).
+  // ============================================================================
+
+  // Sanitizes phone input: strictly filters out any non-digits and caps at 10 digits.
+  function sanitizePhoneNumber(rawInput) {
+    if (!rawInput) {
+      return '';
+    }
+    // Replace all non-digit characters with an empty string
+    const digitsOnly = rawInput.replace(/\D/g, '');
+    // Limit to maximum length of 10 digits
+    if (digitsOnly.length > 10) {
+      return digitsOnly.slice(0, 10);
+    }
+    return digitsOnly;
+  }
+
+  // Validates a 10-digit Philippine mobile number
+  function validatePhoneNumber(phoneNumber) {
+    if (!phoneNumber || phoneNumber.trim() === '') {
+      return 'Please enter your mobile number';
+    }
+    if (phoneNumber.length !== 10) {
+      return 'Mobile number must be exactly 10 digits';
+    }
+    if (phoneNumber.charAt(0) !== '9') {
+      return 'Mobile number must start with 9 (e.g. 9171234567)';
+    }
+    return '';
+  }
+
+  // Input change handlers with instant sanitization
+  function handleSignInPhoneChange(e) {
+    const cleanDigits = sanitizePhoneNumber(e.target.value);
+    setPhone(cleanDigits);
+    if (signInError !== '') {
+      setSignInError('');
+    }
+  }
+
+  function handleSignUpPhoneChange(e) {
+    const cleanDigits = sanitizePhoneNumber(e.target.value);
+    setSignupPhone(cleanDigits);
+    if (signUpError !== '') {
+      setSignUpError('');
+    }
+  }
+
+  function handleSignUpNameChange(e) {
+    setSignupName(e.target.value);
+    if (signUpError !== '') {
+      setSignUpError('');
+    }
+  }
+
+  function handleGuestPhoneChange(e) {
+    const cleanDigits = sanitizePhoneNumber(e.target.value);
+    setGuestPhone(cleanDigits);
+    if (guestError !== '') {
+      setGuestError('');
+    }
+  }
+
+  function handleGuestNameChange(e) {
+    setGuestName(e.target.value);
+    if (guestError !== '') {
+      setGuestError('');
+    }
+  }
+
+  // Handles Sign-In submit with validation
   function handleSignInSubmit(e) {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
-    loginAsCustomer();
+    const phoneErrorMsg = validatePhoneNumber(phone);
+    if (phoneErrorMsg !== '') {
+      setSignInError(phoneErrorMsg);
+      return;
+    }
+    setSignInError('');
+    loginAsCustomer(phone);
   }
 
-  // Handles Sign-Up submit
+  // Handles Sign-Up submit with validation
   function handleSignUpSubmit(e) {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
-    let nameToUse = 'New Customer';
-    if (signupName && signupName.trim().length > 0) {
-      nameToUse = signupName.trim();
+    if (!signupName || signupName.trim().length < 2) {
+      setSignUpError('Please enter your full name (minimum 2 characters)');
+      return;
     }
-
-    let phoneToUse = '917 000 0000';
-    if (signupPhone && signupPhone.trim().length > 0) {
-      phoneToUse = signupPhone.trim();
+    const phoneErrorMsg = validatePhoneNumber(signupPhone);
+    if (phoneErrorMsg !== '') {
+      setSignUpError(phoneErrorMsg);
+      return;
     }
+    setSignUpError('');
+    signupCustomer(signupName.trim(), signupPhone);
+  }
 
-    signupCustomer(nameToUse, phoneToUse);
+  // Handles Guest Modal submit with validation
+  function handleGuestModalSubmit(e) {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    if (!guestName || guestName.trim().length < 2) {
+      setGuestError('Please enter your full name (minimum 2 characters)');
+      return;
+    }
+    const phoneErrorMsg = validatePhoneNumber(guestPhone);
+    if (phoneErrorMsg !== '') {
+      setGuestError(phoneErrorMsg);
+      return;
+    }
+    setGuestError('');
+    loginAsGuest(guestName.trim(), guestPhone);
+    setIsGuestModalOpen(false);
   }
 
   // Helper function: determines CSS class for active auth tab
@@ -69,6 +181,29 @@ export function LoginView() {
       return 'auth-tab-btn active-tab';
     }
     return 'auth-tab-btn';
+  }
+
+  // Helper function: determines CSS class for phone input when an error occurs
+  function getPhoneInputClass(hasError) {
+    if (hasError) {
+      return 'phone-input-group input-has-error';
+    }
+    return 'phone-input-group';
+  }
+
+  // Helper function: determines CSS class for name input wrapper when an error occurs
+  function getTextInputWrapperClass(hasError) {
+    if (hasError) {
+      return 'single-input-wrapper input-has-error';
+    }
+    return 'single-input-wrapper';
+  }
+
+  // Switches between Sign In and Sign Up tabs and clears errors
+  function handleTabSwitch(mode) {
+    setAuthMode(mode);
+    setSignInError('');
+    setSignUpError('');
   }
 
   return (
@@ -114,7 +249,7 @@ export function LoginView() {
             <div className="auth-tab-bar">
               <button
                 type="button"
-                onClick={function () { setAuthMode('signin'); }}
+                onClick={function () { handleTabSwitch('signin'); }}
                 className={getAuthTabClass('signin')}
               >
                 <LogIn size={14} />
@@ -123,7 +258,7 @@ export function LoginView() {
 
               <button
                 type="button"
-                onClick={function () { setAuthMode('signup'); }}
+                onClick={function () { handleTabSwitch('signup'); }}
                 className={getAuthTabClass('signup')}
               >
                 <UserPlus size={14} />
@@ -140,22 +275,32 @@ export function LoginView() {
                   <label htmlFor="phone-input" className="form-label">Mobile Number</label>
                 </div>
 
-                <div className="phone-input-group">
+                <div className={getPhoneInputClass(signInError !== '')}>
                   <div className="country-prefix">
-                    <span className="country-flag">🇵🇭</span>
+                    <span className="country-code-text">PH</span>
                     <span className="country-code">+63</span>
                   </div>
                   <input 
                     type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
                     id="phone-input"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={handleSignInPhoneChange}
                     placeholder="9XX XXX XXXX"
                     className="phone-field"
                     autoComplete="tel"
                     required
                   />
                 </div>
+
+                {signInError !== '' && (
+                  <div className="form-error-banner">
+                    <AlertCircle size={14} />
+                    <span>{signInError}</span>
+                  </div>
+                )}
 
                 {/* Primary Sign In Button */}
                 <button type="submit" className="login-primary-btn">
@@ -168,7 +313,7 @@ export function LoginView() {
                   Don't have an account?{' '}
                   <button 
                     type="button" 
-                    onClick={() => setAuthMode('signup')} 
+                    onClick={function () { handleTabSwitch('signup'); }} 
                     className="auth-switch-link"
                   >
                     Create one here
@@ -186,12 +331,12 @@ export function LoginView() {
                 {/* Full Name Input */}
                 <div className="form-group-block">
                   <label htmlFor="signup-name-input" className="form-label">Full Name</label>
-                  <div className="single-input-wrapper">
+                  <div className={getTextInputWrapperClass(signUpError !== '' && (!signupName || signupName.trim().length < 2))}>
                     <input 
                       type="text"
                       id="signup-name-input"
                       value={signupName}
-                      onChange={(e) => setSignupName(e.target.value)}
+                      onChange={handleSignUpNameChange}
                       placeholder="e.g. Maria Santos"
                       className="text-input-field"
                       required
@@ -202,22 +347,32 @@ export function LoginView() {
                 {/* Mobile Number Input */}
                 <div className="form-group-block">
                   <label htmlFor="signup-phone-input" className="form-label">Mobile Number</label>
-                  <div className="phone-input-group">
+                  <div className={getPhoneInputClass(signUpError !== '' && (signupPhone.length !== 10 || signupPhone.charAt(0) !== '9'))}>
                     <div className="country-prefix">
-                      <span className="country-flag">🇵🇭</span>
+                      <span className="country-code-text">PH</span>
                       <span className="country-code">+63</span>
                     </div>
                     <input 
                       type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={10}
                       id="signup-phone-input"
                       value={signupPhone}
-                      onChange={(e) => setSignupPhone(e.target.value)}
+                      onChange={handleSignUpPhoneChange}
                       placeholder="9XX XXX XXXX"
                       className="phone-field"
                       required
                     />
                   </div>
                 </div>
+
+                {signUpError !== '' && (
+                  <div className="form-error-banner">
+                    <AlertCircle size={14} />
+                    <span>{signUpError}</span>
+                  </div>
+                )}
 
                 {/* Primary Sign Up Button */}
                 <button type="submit" className="login-primary-btn">
@@ -230,7 +385,7 @@ export function LoginView() {
                   Already registered?{' '}
                   <button 
                     type="button" 
-                    onClick={() => setAuthMode('signin')} 
+                    onClick={function () { handleTabSwitch('signin'); }} 
                     className="auth-switch-link"
                   >
                     Sign in to your account
@@ -247,9 +402,10 @@ export function LoginView() {
             </div>
 
             {/* Guest Action Card */}
+            {/* In Vanilla JS: button.onclick = function() { modal.style.display = 'flex'; } */}
             <button 
               type="button" 
-              onClick={loginAsGuest} 
+              onClick={function () { setIsGuestModalOpen(true); }} 
               className="guest-action-card"
             >
               <div className="guest-card-left">
@@ -291,6 +447,106 @@ export function LoginView() {
         </div>
 
       </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* GUEST ACCESS MODAL (Name & Mobile Number input fields)         */}
+      {/* In Vanilla JS: if (isGuestModalOpen) { append modal to body } */}
+      {/* ------------------------------------------------------------- */}
+      {isGuestModalOpen && (
+        <div className="guest-modal-backdrop">
+          <div className="guest-modal-card">
+            
+            {/* Modal Header */}
+            <div className="guest-modal-header">
+              <div className="guest-header-titles">
+                <div className="guest-badge-pill">
+                  <User size={12} />
+                  <span>Guest Drop-Off</span>
+                </div>
+                <h3 className="guest-modal-title">Enter Contact Info</h3>
+                <p className="guest-modal-subtitle">
+                  We need your name and phone number to send your locker claim PIN.
+                </p>
+              </div>
+
+              <button 
+                type="button" 
+                onClick={function () { setIsGuestModalOpen(false); }} 
+                className="guest-modal-close-btn"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Guest Input Form */}
+            <form onSubmit={handleGuestModalSubmit} className="guest-modal-form">
+              
+              {/* Full Name Input */}
+              <div className="form-group-block">
+                <label htmlFor="guest-name-input" className="form-label">Full Name</label>
+                <div className={getTextInputWrapperClass(guestError !== '' && (!guestName || guestName.trim().length < 2))}>
+                  <input 
+                    type="text"
+                    id="guest-name-input"
+                    value={guestName}
+                    onChange={handleGuestNameChange}
+                    placeholder="e.g. Maria Santos"
+                    className="text-input-field"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Mobile Number Input */}
+              <div className="form-group-block">
+                <label htmlFor="guest-phone-input" className="form-label">Mobile Number</label>
+                <div className={getPhoneInputClass(guestError !== '' && (guestPhone.length !== 10 || guestPhone.charAt(0) !== '9'))}>
+                  <div className="country-prefix">
+                    <span className="country-code-text">PH</span>
+                    <span className="country-code">+63</span>
+                  </div>
+                  <input 
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
+                    id="guest-phone-input"
+                    value={guestPhone}
+                    onChange={handleGuestPhoneChange}
+                    placeholder="9XX XXX XXXX"
+                    className="phone-field"
+                    required
+                  />
+                </div>
+              </div>
+
+              {guestError !== '' && (
+                <div className="form-error-banner">
+                  <AlertCircle size={14} />
+                  <span>{guestError}</span>
+                </div>
+              )}
+
+              {/* Primary Action Button */}
+              <button type="submit" className="login-primary-btn">
+                <span>Proceed as Guest</span>
+                <ArrowRight size={18} />
+              </button>
+
+              {/* Cancel Button */}
+              <button 
+                type="button" 
+                onClick={function () { setIsGuestModalOpen(false); }} 
+                className="guest-modal-cancel-btn"
+              >
+                Cancel
+              </button>
+            </form>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

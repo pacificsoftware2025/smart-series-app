@@ -154,11 +154,44 @@ export function ServicePreferenceModal(props) {
       <div className="pref-modal-card">
         
         {/* ------------------------------------------------------------- */}
-        {/* MODAL HEADER                                                  */}
+        {/* MODAL HEADER (Only shown while configuring preferences)       */}
         {/* ------------------------------------------------------------- */}
-        <div className="pref-modal-header">
-          <div className="header-meta-col">
-            <div className="header-badges-row">
+        {!unlockedSuccess && (
+          <div className="pref-modal-header">
+            <div className="header-meta-col">
+              <div className="header-badges-row">
+                <span className="station-code-pill">
+                  <span className="live-pulse-dot"></span> {stationId}
+                </span>
+                <span className="locker-assigned-pill">
+                  <Box size={12} /> Box #{assignedBox} (Medium)
+                </span>
+              </div>
+              
+              <h3 className="modal-main-title">Select Service & Drop Off</h3>
+              <p className="modal-sub-info">
+                Configure wash preferences before door unlocks.
+              </p>
+            </div>
+
+            <button 
+              type="button"
+              onClick={onClose}
+              disabled={isUnlocking}
+              className="pref-close-btn"
+              title="Close"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* CONTENT BODY: Success State vs Configuration Form             */}
+        {/* ------------------------------------------------------------- */}
+        {unlockedSuccess && (
+          <div className="unlock-success-panel">
+            <div className="header-badges-row" style={{ marginBottom: '1rem' }}>
               <span className="station-code-pill">
                 <span className="live-pulse-dot"></span> {stationId}
               </span>
@@ -166,29 +199,7 @@ export function ServicePreferenceModal(props) {
                 <Box size={12} /> Box #{assignedBox} (Medium)
               </span>
             </div>
-            
-            <h3 className="modal-main-title">Select Service & Drop Off</h3>
-            <p className="modal-sub-info">
-              Configure wash preferences before door unlocks.
-            </p>
-          </div>
 
-          <button 
-            type="button"
-            onClick={onClose}
-            disabled={isUnlocking || unlockedSuccess}
-            className="pref-close-btn"
-            title="Close"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* CONTENT BODY: Success State vs Configuration Form             */}
-        {/* ------------------------------------------------------------- */}
-        {unlockedSuccess && (
-          <div className="unlock-success-panel">
             <div className="success-icon-box">
               <Unlock size={32} />
             </div>
@@ -196,7 +207,7 @@ export function ServicePreferenceModal(props) {
             <h4 className="success-headline">Locker Box #{assignedBox} Is Open!</h4>
             
             <p className="success-instruction">
-              Please insert your laundry bag inside and shut the locker door firmly until it latches.
+              Place your laundry bag inside and close the locker door securely.
             </p>
 
             <button
@@ -204,7 +215,7 @@ export function ServicePreferenceModal(props) {
               onClick={handleConfirmClosedAndRedirect}
               className="confirm-closed-btn"
             >
-              <span>I've Closed the Locker Door · View Order Tracker</span>
+              <span>View Order Tracker</span>
               <ArrowRight size={18} />
             </button>
           </div>

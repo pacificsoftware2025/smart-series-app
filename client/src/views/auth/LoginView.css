@@ -371,6 +371,41 @@
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
 }
 
+/* Error banner and input highlighting */
+.form-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background-color: var(--rose-50);
+  border: 1px solid #fecdd3;
+  color: var(--rose-600);
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.71875rem;
+  font-weight: 700;
+  margin-top: -0.25rem;
+  margin-bottom: 0.875rem;
+  animation: error-shake 0.25s ease-in-out;
+}
+
+@keyframes error-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.input-has-error {
+  border-color: var(--rose-600) !important;
+  background-color: var(--rose-50) !important;
+}
+
+.input-has-error:focus-within {
+  border-color: var(--rose-600) !important;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.15) !important;
+}
+
 .country-prefix {
   display: flex;
   align-items: center;
@@ -379,6 +414,16 @@
   background-color: var(--slate-100);
   border-right: 1px solid var(--slate-200);
   user-select: none;
+}
+
+.country-code-text {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--slate-600);
+  background-color: var(--slate-200);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
 }
 
 .country-flag {
@@ -662,4 +707,142 @@
   color: var(--slate-400);
   font-weight: 500;
   text-align: center;
+}
+
+/* ------------------------------------------------------------- */
+/* Guest Access Modal Styles                                     */
+/* ------------------------------------------------------------- */
+.guest-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: guest-fade-in 0.2s ease-out;
+}
+
+@keyframes guest-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.guest-modal-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 380px;
+  padding: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--slate-200);
+  animation: guest-card-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+@keyframes guest-card-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.guest-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.guest-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.guest-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: var(--brand-orange);
+  background-color: var(--brand-orange-light);
+  border: 1px solid #fed7aa;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.guest-modal-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--slate-900);
+  letter-spacing: -0.01em;
+  margin-top: 2px;
+}
+
+.guest-modal-subtitle {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+  line-height: 1.4;
+}
+
+.guest-modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--slate-200);
+  background-color: var(--slate-50);
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.guest-modal-close-btn:hover {
+  background-color: var(--slate-100);
+  color: var(--slate-800);
+}
+
+.guest-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.guest-modal-cancel-btn {
+  width: 100%;
+  padding: 0.625rem;
+  background: transparent;
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--slate-600);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.guest-modal-cancel-btn:hover {
+  background-color: var(--slate-100);
+  color: var(--slate-900);
 }
