@@ -5,7 +5,6 @@ import {
   User, 
   Truck, 
   Lock, 
-  Box, 
   UserPlus, 
   LogIn,
   X,
@@ -225,19 +224,33 @@ export function LoginView() {
         {/* Scrollable Container */}
         <div className="login-scroll-body">
           
-          {/* Hero Visual & Branding */}
+          {/* Hero Brand Header with Grab 'n Go Bar Logo Watermark & Gradient Fade */}
           <div className="login-hero-section">
-            <div className="hero-emblem-wrap">
-              <div className="hero-emblem-glow"></div>
-              <div className="hero-emblem-box">
-                <Box size={28} className="hero-icon" />
-              </div>
+            {/* Soft Radial Halo Glow */}
+            <div className="hero-halo-glow"></div>
+
+            {/* Faded Watermark Logo with Gradient Fade Mask */}
+            <div className="hero-watermark-wrap">
+              <img 
+                src="https://static.wixstatic.com/media/b15e89_67ae7ed656e9491197c7bfd8fb4090f2~mv2.png" 
+                alt="Grab n Go Logo Watermark" 
+                className="hero-watermark-img"
+              />
             </div>
-            
-            <h1 className="hero-title">Smart Locker</h1>
-            <p className="hero-subtitle">
-              Automated drop-off, real-time laundry tracking, & secure contact-free lockers.
-            </p>
+
+            {/* Ambient Silhouettes for layered depth */}
+            <svg className="hero-ambient-cards" viewBox="0 0 400 240" preserveAspectRatio="none">
+              <rect x="-30" y="30" width="130" height="120" rx="26" fill="#ffffff" transform="rotate(-15)" />
+              <rect x="290" y="40" width="140" height="130" rx="28" fill="#ffffff" transform="rotate(18)" />
+            </svg>
+
+            {/* Foreground Content */}
+            <div className="hero-content">
+              <h1 className="hero-title">Welcome Back</h1>
+              <p className="hero-subtitle">
+                Automated drop-off, real-time laundry tracking, & secure contact-free lockers.
+              </p>
+            </div>
           </div>
 
           {/* Main Card Container */}
@@ -304,7 +317,7 @@ export function LoginView() {
 
                 {/* Primary Sign In Button */}
                 <button type="submit" className="login-primary-btn">
-                  <span>Sign In to Locker</span>
+                  <span>Login</span>
                   <ArrowRight size={18} />
                 </button>
 
@@ -459,11 +472,7 @@ export function LoginView() {
             {/* Modal Header */}
             <div className="guest-modal-header">
               <div className="guest-header-titles">
-                <div className="guest-badge-pill">
-                  <User size={12} />
-                  <span>Guest Drop-Off</span>
-                </div>
-                <h3 className="guest-modal-title">Enter Contact Info</h3>
+                <h3 className="guest-modal-title">Guest Drop-Off Access</h3>
                 <p className="guest-modal-subtitle">
                   We need your name and phone number to send your locker claim PIN.
                 </p>
