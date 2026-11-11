@@ -660,7 +660,7 @@
   padding: 0.65rem 0.85rem;
   border-radius: 14px;
   border: 1px solid var(--slate-200);
-  background-color: #ffffff;
+  background-color: var(--slate-50);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -678,6 +678,7 @@
 .rider-action-card:hover .rider-icon-circle {
   background-color: #e0f2fe;
   color: #0284c7;
+  border-color: #7dd3fc;
 }
 
 .rider-action-card:hover .rider-title {
@@ -713,12 +714,14 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background-color: var(--slate-100);
-  color: var(--slate-400);
+  background-color: #ffffff;
+  border: 1px solid var(--slate-200);
+  color: var(--slate-700);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .rider-info {
@@ -727,14 +730,19 @@
 }
 
 .rider-title {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  color: var(--slate-500);
+  color: var(--slate-800);
 }
 
 .rider-desc {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--slate-400);
+}
+
+.rider-arrow {
+  color: var(--slate-400);
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .locked-badge {

@@ -541,8 +541,7 @@ export function ActiveOrderCard(props) {
             {/* Itemized Billing Breakdown Box */}
             <div className="invoice-breakdown-box">
               <div className="breakdown-header">
-                <span className="breakdown-header-title">Itemized Billing Breakdown</span>
-                <span className="breakdown-tag">Verified Rate</span>
+                <span className="breakdown-header-title">Billing Breakdown</span>
               </div>
 
               <div className="breakdown-rows-list">
