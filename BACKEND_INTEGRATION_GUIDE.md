@@ -272,10 +272,133 @@ Actuates the solenoid relay to open the pickup locker compartment (Box #06).
 ### 3.4 Driver & Van Logistics Routes (`/api/rider`)
 For the route driver collecting and returning laundry bags.
 
-- `GET /api/rider/pickup-queue`: Compartments with laundry bags ready for driver collection.
-- `PATCH /api/rider/orders/:id/collect`: Driver opens drop-off box and scans bag into van (advances order to Stage 2: `rider_transit`).
-- `PATCH /api/rider/orders/:id/facility-intake`: Central laundry facility logs verified weight (advances order to Stage 3: `in_wash`).
-- `PATCH /api/rider/orders/:id/deliver-locker`: Driver places clean laundry in locker (advances order to Stage 4: `ready_for_pickup` with generated PIN).
+#### `GET /api/rider/pickup-queue`
+Returns all compartments containing dirty laundry bags waiting for van collection, sorted from nearest to farthest.
+- **Response Body (`200 OK`):**
+  ```json
+  [
+    {
+      "id": "ORD-8421",
+      "distanceKm": 0.3,
+      "distanceText": "0.3 km away",
+      "stationName": "Central Mall Hub (Level 1 East)",
+      "lockerNumber": "03",
+      "customerName": "Jamie Davis",
+      "serviceType": "Wash, Dry & Fold",
+      "loadSize": "Medium (5.2kg)",
+      "droppedTime": "Dropped 18m ago",
+      "status": "dropped_off"
+    },
+    {
+      "id": "ORD-7719",
+      "distanceKm": 1.2,
+      "distanceText": "1.2 km away",
+      "stationName": "North Plaza Hub (Tower B Ground)",
+      "lockerNumber": "07",
+      "customerName": "Carlos Mendoza",
+      "serviceType": "Wash & Dry",
+      "loadSize": "Large (7.8kg)",
+      "droppedTime": "Dropped 35m ago",
+      "status": "dropped_off"
+    }
+  ]
+  ```
+
+#### `POST /api/lockers/:id/unlock-dropoff`
+Actuates the IoT solenoid relay on the drop-off compartment (e.g. Box #03) so the driver can retrieve the customer's dirty laundry bag.
+- **Response Body (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "lockerBox": "03",
+    "status": "unlocked",
+    "message": "Solenoid actuated: compartment opened for driver pickup"
+  }
+  ```
+
+#### `PATCH /api/rider/orders/:id/collect`
+Triggered when the driver completes the **"Swipe confirm pickup"** gesture. Links the assigned laundry bag barcode tag to the order and advances status to Stage 2 (`rider_transit`).
+- **Request Body:**
+  ```json
+  {
+    "lockerNumber": "03",
+    "laundryBagNumber": "BAG-8821"
+  }
+  ```
+- **Response Body (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "orderId": "ORD-8421",
+    "status": "rider_transit",
+    "lockerNumber": "03",
+    "laundryBagNumber": "BAG-8821",
+    "collectedAt": "2026-11-11T10:45:00.000Z",
+    "message": "Order moved to van transit"
+  }
+  ```
+
+#### `GET /api/rider/delivery-queue`
+Returns all clean laundry packages currently loaded in the van waiting for locker return, sorted by destination station distance.
+- **Response Body (`200 OK`):**
+  ```json
+  [
+    {
+      "id": "ORD-5192",
+      "distanceKm": 0.3,
+      "distanceText": "0.3 km away",
+      "stationName": "Central Mall Hub (Level 1 East)",
+      "pickupBoxNumber": "06",
+      "laundryBagNumber": "BAG-6910",
+      "customerName": "Roberto Tan",
+      "serviceType": "Wash, Dry & Fold",
+      "weightKg": 4.9,
+      "status": "in_wash"
+    }
+  ]
+  ```
+
+#### `POST /api/lockers/:id/unlock-return`
+Actuates the IoT solenoid relay on an empty return compartment (e.g. Box #06) so the driver can place the clean, folded laundry bag inside.
+- **Response Body (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "lockerBox": "06",
+    "status": "unlocked",
+    "message": "Solenoid actuated: compartment opened for clean laundry delivery"
+  }
+  ```
+
+#### `PATCH /api/rider/orders/:id/facility-intake`
+Central laundry facility logs verified scale weight (advances order to Stage 3: `in_wash`).
+- **Request Body:**
+  ```json
+  {
+    "weightKg": 5.2
+  }
+  ```
+
+#### `PATCH /api/rider/orders/:id/deliver-locker`
+Triggered when the driver completes the **"Swipe confirm delivery"** gesture. Places clean laundry into whichever unoccupied compartment (e.g. Box #06) was chosen/scanned by the driver at the locker station, advances order to Stage 4 (`ready_for_pickup`), and generates the customer's 6-digit claim PIN.
+- **Request Body:**
+  ```json
+  {
+    "pickupBoxNumber": "06"
+  }
+  ```
+- **Response Body (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "orderId": "ORD-8421",
+    "status": "ready_for_pickup",
+    "pickupBoxNumber": "06",
+    "claimPin": "842019",
+    "deliveredAt": "2026-11-11T11:35:00.000Z",
+    "message": "Clean laundry delivered to locker. Customer claim PIN generated."
+  }
+  ```
 
 ---
 
@@ -288,9 +411,16 @@ The React client is architected so that the backend developer only needs to modi
 | `client/src/context/AuthContext.jsx` -> `loginAsGuest(name, phone)` | Local `useState` | `POST /api/auth/guest` |
 | `client/src/context/AuthContext.jsx` -> `signupCustomer(name, phone)` | Local `useState` | `POST /api/auth/signup` |
 | `client/src/context/AuthContext.jsx` -> `loginAsCustomer()` | Hardcoded Jamie Davis | `POST /api/auth/signin` |
+| `client/src/context/AuthContext.jsx` -> `loginAsRider(name, van)` | Hardcoded Marco Valdes | `POST /api/auth/rider` |
 | `client/src/context/AuthContext.jsx` -> `createOrder(orderData)` | Local memory calculation | `POST /api/orders` |
 | `client/src/views/customer/dropoff/NearbyLockerCard.jsx` | Static `NEARBY_STATIONS` list | `GET /api/lockers/nearby` |
 | `client/src/views/customer/tracker/ActiveOrderCard.jsx` | Local step simulation | `GET /api/orders/active` & `POST /api/orders/:id/pay` |
+| `client/src/views/driver/DriverView.jsx` -> Tab 1 | Static `INITIAL_MOCK_PENDING` | `GET /api/rider/pickup-queue` |
+| `client/src/views/driver/pickup/PickupWorkflowModal.jsx` -> Step 1 | Simulated 750ms timeout | `POST /api/lockers/:id/unlock-dropoff` |
+| `client/src/views/driver/pickup/PickupWorkflowModal.jsx` -> Step 3 | Swipe slider callback | `PATCH /api/rider/orders/:id/collect` |
+| `client/src/views/driver/DriverView.jsx` -> Tab 2 | Static `INITIAL_MOCK_DELIVERIES` | `GET /api/rider/delivery-queue` |
+| `client/src/views/driver/delivery/DeliveryWorkflowModal.jsx` -> Step 2 | Simulated 750ms timeout | `POST /api/lockers/:id/unlock-return` |
+| `client/src/views/driver/delivery/DeliveryWorkflowModal.jsx` -> Step 3 | Swipe slider callback | `PATCH /api/rider/orders/:id/deliver-locker` |
 
 ### 4.1 Stage 4: Locker Delivery Complete & Bill Breakdown Mapping
 
@@ -307,6 +437,16 @@ When an order reaches Stage 4 (`ready_for_pickup`), `ActiveOrderCard.jsx` expect
 | **Claim PIN** | `activeOrder.claimPin` | `claimPin` | `"842019"` | 6-digit PIN used at locker kiosk touch screen |
 
 The frontend helper `getBillBreakdown(order)` automatically handles rate-per-kg math and conditional line items, so the backend only needs to return standard numbers and booleans.
+
+### 4.2 Stage 1 -> Stage 2: Driver Pickup to Customer UI Transition Mapping
+
+When the driver executes **"Swipe confirm pickup"** via `PATCH /api/rider/orders/:id/collect`:
+1. The order status updates from `dropped_off` to `rider_transit`.
+2. The backend stores the assigned `laundryBagNumber` and source `lockerNumber`.
+3. In the Customer UI (`ActiveOrderCard.jsx`), this automatically advances the timeline tracker:
+   - **Progress Bar**: Moves from 0% (Node 1: Dropped Off) to 33.33% (Node 2: Van Transit).
+   - **Context Banner**: Switches from *Locker Box Secured* to *Collected by Route Driver*.
+   - **Bag Tracking**: Displays the assigned `laundryBagNumber` and confirms the bag is in transit to the central facility.
 
 ---
 

@@ -654,6 +654,41 @@
   color: var(--slate-700);
 }
 
+/* Rider Action Card (Unlocked Route Portal) */
+.rider-action-card {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid var(--slate-200);
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.rider-action-card:hover {
+  background-color: #f0f9ff;
+  border-color: #38bdf8;
+  box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.12);
+}
+
+.rider-action-card:hover .rider-icon-circle {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.rider-action-card:hover .rider-title {
+  color: #0f172a;
+}
+
+.rider-action-card:hover .rider-arrow {
+  transform: translateX(2px);
+  color: #0284c7;
+}
+
 /* Rider Disabled Card */
 .rider-card-disabled {
   width: 100%;

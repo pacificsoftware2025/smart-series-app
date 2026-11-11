@@ -433,8 +433,12 @@ export function LoginView() {
               <ArrowRight size={16} className="guest-arrow" />
             </button>
 
-            {/* Logistics / Rider Access (Locked) */}
-            <div className="rider-card-disabled">
+            {/* Logistics / Rider Access Portal */}
+            <button
+              type="button"
+              onClick={function () { auth.loginAsRider(); }}
+              className="rider-action-card"
+            >
               <div className="rider-card-left">
                 <div className="rider-icon-circle">
                   <Truck size={17} />
@@ -444,11 +448,8 @@ export function LoginView() {
                   <span className="rider-desc">Scheduled pickup route portal</span>
                 </div>
               </div>
-              <div className="locked-badge">
-                <Lock size={11} />
-                <span>Locked</span>
-              </div>
-            </div>
+              <ArrowRight size={16} className="guest-arrow rider-arrow" />
+            </button>
 
           </div>
 

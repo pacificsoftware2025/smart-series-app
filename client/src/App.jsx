@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from './context/AuthContext';
+import { ROLES } from './constants/roles';
 import { LoginView } from './views/auth/LoginView';
 import { MobileShell } from './components/layout/MobileShell';
 import { CustomerView } from './views/customer/CustomerView';
+import { DriverView } from './views/driver/DriverView';
 
 // ==============================================================================
 // REACT COMPONENT: App
-// The root component of our application.
-// In Vanilla JS, think of this like your main router:
-// if (!user) { renderLogin(); } else { renderDashboard(); }
+// The root component of our application with RBAC role dispatching.
+// In Vanilla JS:
+//   if (!user) renderLogin();
+//   else if (user.role === 'rider') renderDriverView();
+//   else renderCustomerView();
 // ==============================================================================
 export default function App() {
   const auth = useAuth();
@@ -18,15 +22,17 @@ export default function App() {
   // 'nearby' (Nearby Locker) or 'active_order' (Active Laundry Tracker)
   const [activeTab, setActiveTab] = useState('nearby');
 
-  // ============================================================================
-  // CONDITIONAL RENDERING (Guard Clause in Vanilla JS):
-  // If the user has not logged in yet, return the LoginView component.
-  // ============================================================================
+  // Guard Clause: If not logged in, render LoginView
   if (!user) {
     return <LoginView />;
   }
 
-  // Once a user is logged in, wrap the CustomerView inside the MobileShell layout frame.
+  // RBAC Driver Route: If user has RIDER role, render dedicated field portal
+  if (user.role === ROLES.RIDER) {
+    return <DriverView />;
+  }
+
+  // Customer / Guest Route: Wrapped inside standard MobileShell frame
   return (
     <MobileShell activeTab={activeTab} setActiveTab={setActiveTab}>
       <CustomerView activeTab={activeTab} setActiveTab={setActiveTab} />

@@ -1,0 +1,356 @@
+/* ==============================================================================
+   DELIVERY WORKFLOW MODAL (Clean Laundry Return to Locker)
+   ============================================================================== */
+
+.delivery-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+.delivery-modal-container {
+  width: 100%;
+  max-width: 440px;
+  background-color: #ffffff;
+  border-radius: 28px 28px 0 0;
+  padding: 1.5rem 1.25rem 2rem 1.25rem;
+  box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.28);
+  animation: modal-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Header */
+.delivery-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.delivery-header-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.delivery-hub-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #0284c7;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  align-self: flex-start;
+}
+
+.delivery-modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.delivery-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delivery-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* 3-Step Stepper Bar */
+.delivery-stepper-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.5rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.delivery-stepper-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+
+.delivery-stepper-pill.step-done {
+  opacity: 1;
+}
+
+.delivery-stepper-pill .step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.delivery-stepper-pill.step-done .step-num {
+  background-color: #0284c7;
+}
+
+.delivery-stepper-line {
+  flex: 1;
+  height: 2px;
+  background-color: #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.delivery-stepper-line.line-done {
+  background-color: #0284c7;
+}
+
+/* Step Content */
+.delivery-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.delivery-instruction-card {
+  background-color: #f8fafc;
+  border-left: 3.5px solid #0284c7;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0 10px 10px 0;
+}
+
+/* Empty Compartment Selector Bar (Step 2) */
+.free-boxes-selector-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+}
+
+.free-boxes-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.free-boxes-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.free-box-select-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.free-box-select-btn:hover {
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+.free-box-select-btn.box-selected {
+  background-color: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+}
+
+/* Order Match Box (Step 1) */
+.delivery-order-match-box {
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.match-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #e2e8f0;
+}
+
+.match-lbl {
+  display: block;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+}
+
+.match-val {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.match-val.highlight-val {
+  color: #0284c7;
+}
+
+/* Action Buttons */
+.delivery-step-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.delivery-action-btn {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 14px;
+  border: none;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.delivery-action-btn.scan-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+}
+
+.delivery-action-btn.scan-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(2, 132, 199, 0.45);
+}
+
+.delivery-action-btn.next-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+}
+
+/* Step 3 Summary Manifest */
+.delivery-summary-manifest {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pin-preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+/* Step 4 Success PIN Card */
+.pin-generated-card {
+  width: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 16px;
+  padding: 1.15rem;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+  margin-top: 0.25rem;
+}
+
+.pin-card-lbl {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pin-card-digits {
+  font-family: monospace;
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 0.2em;
+}
+
+.pin-card-note {
+  font-size: 0.6875rem;
+  color: #cbd5e1;
+}

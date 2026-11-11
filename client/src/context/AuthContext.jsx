@@ -117,6 +117,57 @@ export function AuthProvider(props) {
     setActiveOrder(null);
   }
 
+  // Logs in as Delivery Driver / Field Ops Route Rider
+  function loginAsRider(riderName, vanPlate) {
+    let nameToUse = 'Marco Valdes';
+    if (riderName && riderName.trim().length > 0) {
+      nameToUse = riderName.trim();
+    }
+
+    let vanToUse = 'Van #04 (Route Metro)';
+    if (vanPlate && vanPlate.trim().length > 0) {
+      vanToUse = vanPlate.trim();
+    }
+
+    setUser({
+      name: nameToUse,
+      initials: 'MV',
+      phone: '918 555 7788',
+      role: ROLES.RIDER,
+      van: vanToUse,
+      location: 'Metro Central Route',
+    });
+  }
+
+  // Updates active order status and attaches laundry bag, locker, and delivery claim fields
+  function updateOrderStatus(orderId, newStatus, extraData) {
+    if (!activeOrder) {
+      return;
+    }
+    const updated = Object.assign({}, activeOrder, { status: newStatus });
+    if (extraData) {
+      if (extraData.laundryBagNumber) {
+        updated.laundryBagNumber = extraData.laundryBagNumber;
+      }
+      if (extraData.lockerNumber) {
+        updated.lockerNumber = extraData.lockerNumber;
+      }
+      if (extraData.pickupBoxNumber) {
+        updated.pickupBoxNumber = extraData.pickupBoxNumber;
+      }
+      if (extraData.claimPin) {
+        updated.claimPin = extraData.claimPin;
+      }
+      if (extraData.weightKg) {
+        updated.weightKg = extraData.weightKg;
+      }
+      if (extraData.isPaid !== undefined) {
+        updated.isPaid = extraData.isPaid;
+      }
+    }
+    setActiveOrder(updated);
+  }
+
   // Creates an active order after the customer unlocks a locker
   function createOrder(orderData) {
     let size = 'Medium (Max 7kg)';
@@ -188,6 +239,8 @@ export function AuthProvider(props) {
     loginAsGuest: loginAsGuest,
     loginAsCustomer: loginAsCustomer,
     signupCustomer: signupCustomer,
+    loginAsRider: loginAsRider,
+    updateOrderStatus: updateOrderStatus,
     logout: logout,
     createOrder: createOrder,
   };
