@@ -51,22 +51,6 @@ function getPinCircleClass(stationId, activeId) {
   return 'pin-icon-circle pin-inactive';
 }
 
-// Helper function: determines pin label pill CSS class
-function getPinPillClass(stationId, activeId) {
-  if (stationId === activeId) {
-    return 'mall-name-pill pill-active';
-  }
-  return 'mall-name-pill pill-inactive';
-}
-
-// Helper function: determines station selector button CSS class
-function getStationToggleBtnClass(stationId, activeId) {
-  if (stationId === activeId) {
-    return 'station-toggle-btn toggle-active';
-  }
-  return 'station-toggle-btn';
-}
-
 // ==============================================================================
 // REACT COMPONENT: NearbyLockerCard
 // Displays the interactive minimap (zoomable & draggable) with multiple nearby
@@ -92,7 +76,8 @@ export function NearbyLockerCard(props) {
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedStationId, setSelectedStationId] = useState('CMH-01');
+  const [selectedStationId, setSelectedStationId] = useState(null); // null = no locker clicked initially
+  const [hoveredStationId, setHoveredStationId] = useState(null); // tracks locker pin mouse hover
   const dragStartRef = useRef({ x: 0, y: 0, startPanX: 0, startPanY: 0 });
 
   // Currently active station data
@@ -317,33 +302,6 @@ export function NearbyLockerCard(props) {
               <text x="210" y="270" fill="#94a3b8" fontSize="8" fontWeight="600">
                 MAKATI AVE
               </text>
-
-              {/* Station 2 Building Footprint (Ayala Commercial Hub) */}
-              <rect 
-                x="350" 
-                y="35" 
-                width="120" 
-                height="70" 
-                rx="12" 
-                fill="#eff6ff" 
-                stroke="#bfdbfe" 
-                strokeWidth="2" 
-              />
-              <text x="365" y="58" fill="#0369a1" fontSize="9" fontWeight="700">
-                Commercial Hub
-              </text>
-
-              {/* Station 1 Building Footprint (Central Mall Complex) */}
-              <rect 
-                x="250" 
-                y="105" 
-                width="120" 
-                height="80" 
-                rx="14" 
-                fill="#ffedd5" 
-                stroke="#fed7aa" 
-                strokeWidth="2" 
-              />
             </svg>
 
             {/* --------------------------------------------------------- */}
@@ -351,9 +309,11 @@ export function NearbyLockerCard(props) {
             {/* --------------------------------------------------------- */}
             <div 
               onClick={function (e) { handleSelectStation(NEARBY_STATIONS[0], e); }}
+              onMouseEnter={function () { setHoveredStationId('CMH-01'); }}
+              onMouseLeave={function () { setHoveredStationId(null); }}
               className="map-pin-anchor"
               style={{ top: '50%', left: '50%' }}
-              title="Select Central Mall Hub"
+              title="Central Mall Hub"
             >
               {selectedStationId === 'CMH-01' && <div className="pin-radar-ring"></div>}
               
@@ -361,9 +321,20 @@ export function NearbyLockerCard(props) {
                 <Box size={15} />
               </div>
               
-              <span className={getPinPillClass('CMH-01', selectedStationId)}>
-                Central Mall Hub
-              </span>
+              {/* Clicked State: Shows Name AND Available Large/Small */}
+              {selectedStationId === 'CMH-01' && (
+                <div className="mall-name-pill pill-selected">
+                  <span className="pill-station-title">Central Mall Hub</span>
+                  <span className="pill-station-avail">4 small, 2 large available</span>
+                </div>
+              )}
+
+              {/* Hover-Only State: Shows Locker Name on mouse hover */}
+              {hoveredStationId === 'CMH-01' && selectedStationId !== 'CMH-01' && (
+                <div className="mall-name-pill pill-hovered">
+                  <span className="pill-station-title">Central Mall Hub</span>
+                </div>
+              )}
             </div>
 
             {/* --------------------------------------------------------- */}
@@ -371,9 +342,11 @@ export function NearbyLockerCard(props) {
             {/* --------------------------------------------------------- */}
             <div 
               onClick={function (e) { handleSelectStation(NEARBY_STATIONS[1], e); }}
+              onMouseEnter={function () { setHoveredStationId('ACH-02'); }}
+              onMouseLeave={function () { setHoveredStationId(null); }}
               className="map-pin-anchor"
               style={{ top: '28%', left: '68%' }}
-              title="Select Ayala Commercial Kiosk"
+              title="Ayala Commercial Kiosk"
             >
               {selectedStationId === 'ACH-02' && <div className="pin-radar-ring"></div>}
               
@@ -381,9 +354,20 @@ export function NearbyLockerCard(props) {
                 <Box size={15} />
               </div>
               
-              <span className={getPinPillClass('ACH-02', selectedStationId)}>
-                Ayala Commercial Kiosk
-              </span>
+              {/* Clicked State: Shows Name AND Available Large/Small */}
+              {selectedStationId === 'ACH-02' && (
+                <div className="mall-name-pill pill-selected">
+                  <span className="pill-station-title">Ayala Commercial Kiosk</span>
+                  <span className="pill-station-avail">3 small, 3 medium available</span>
+                </div>
+              )}
+
+              {/* Hover-Only State: Shows Locker Name on mouse hover */}
+              {hoveredStationId === 'ACH-02' && selectedStationId !== 'ACH-02' && (
+                <div className="mall-name-pill pill-hovered">
+                  <span className="pill-station-title">Ayala Commercial Kiosk</span>
+                </div>
+              )}
             </div>
 
           </div>
@@ -437,30 +421,10 @@ export function NearbyLockerCard(props) {
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* STATION DETAILS & SELECTOR                                    */}
+        {/* STATION DETAILS                                               */}
         {/* ------------------------------------------------------------- */}
         <div className="station-card-body">
           
-          {/* Station Switcher Strip */}
-          <div className="station-selector-strip">
-            <button
-              type="button"
-              onClick={function (e) { handleSelectStation(NEARBY_STATIONS[0], e); }}
-              className={getStationToggleBtnClass('CMH-01', selectedStationId)}
-            >
-              <Box size={13} />
-              <span>Central Mall Hub</span>
-            </button>
-            <button
-              type="button"
-              onClick={function (e) { handleSelectStation(NEARBY_STATIONS[1], e); }}
-              className={getStationToggleBtnClass('ACH-02', selectedStationId)}
-            >
-              <Box size={13} />
-              <span>Ayala Commercial Kiosk</span>
-            </button>
-          </div>
-
           {/* Station Title Row */}
           <div className="station-title-row">
             <div>

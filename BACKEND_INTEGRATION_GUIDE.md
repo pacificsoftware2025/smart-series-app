@@ -150,6 +150,10 @@ Creates a new customer account.
   ```
 - **Response (201 Created):** User object with `role: "customer"` and JWT token.
 
+*Phone Validation Contract Across All Auth Routes:*
+- The frontend enforces strict phone validation: **numbers only (`0-9`)** and **maximum 10 digits** (e.g., `9171234567`, excluding the PH country code `+63`).
+- Backend controllers should sanitize or validate with `phone.replace(/\D/g, '').slice(0, 10)` to match.
+
 ---
 
 ### 3.2 Locker & Hardware Routes (`/api/lockers`)
@@ -211,6 +215,7 @@ Creates a new laundry order after the customer confirms preferences and closes t
   ```json
   {
     "stationId": "CMH-01",
+    "stationName": "Central Mall Hub",
     "lockerNumber": "03",
     "serviceType": "Wash & Dry",
     "loadSize": "Medium (Max 7kg)",
