@@ -1,0 +1,730 @@
+/* LockerMonitoringTab.css — Stripe-Grade Smart Locker Fleet Monitoring */
+
+.locker-monitoring-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  font-family: inherit;
+}
+
+/* ------------------------------------------------------------- */
+/* 1. TOP CONTROL BAR                                            */
+/* ------------------------------------------------------------- */
+.telemetry-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.65rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.telemetry-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Quick Search Input */
+.telemetry-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  transition: all 0.15s ease;
+}
+
+.telemetry-search-wrap:focus-within {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05);
+}
+
+.telemetry-search-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.telemetry-search-input {
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  color: #0f172a;
+  outline: none;
+  width: 175px;
+  font-family: inherit;
+}
+
+.telemetry-search-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Filter Pills Group */
+.filter-pills-group {
+  display: flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.locker-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.locker-filter-pill.active {
+  background-color: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.dot-green {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #10b981;
+}
+
+.dot-amber {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #f59e0b;
+}
+
+/* Refresh Button */
+.refresh-telemetry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.refresh-telemetry-btn:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* ------------------------------------------------------------- */
+/* 2. TOP METRICS STRIP (Matches Stripe 4-Card Hierarchy)         */
+/* ------------------------------------------------------------- */
+.locker-kpi-strip {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+@media (max-width: 900px) {
+  .locker-kpi-strip {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.kpi-strip-item {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #f1f5f9;
+  padding-right: 1.25rem;
+}
+
+.kpi-strip-item:not(:first-child) {
+  padding-left: 1.25rem;
+}
+
+.kpi-strip-item.item-last {
+  border-right: none;
+}
+
+.kpi-strip-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-strip-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.kpi-total {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.text-green {
+  color: #059669;
+}
+
+.text-amber {
+  color: #d97706;
+}
+
+.text-slate {
+  color: #0f172a;
+}
+
+.kpi-closed-text {
+  color: #dc2626;
+  font-size: 1.25rem;
+}
+
+.kpi-open-text {
+  color: #059669;
+  font-size: 1.25rem;
+}
+
+.kpi-strip-sub {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+/* ------------------------------------------------------------- */
+/* 3. 15-BOX COMPARTMENTS GRID                                   */
+/* ------------------------------------------------------------- */
+.lockers-hardware-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (max-width: 1300px) {
+  .lockers-hardware-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .lockers-hardware-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .lockers-hardware-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Redesigned Minimalist Modern Locker Card */
+.modern-locker-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+.modern-locker-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.08);
+}
+
+.modern-locker-card.selected {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px #0f172a, 0 6px 16px -4px rgba(15, 23, 42, 0.1);
+}
+
+.modern-locker-card.card-available {
+  border-top: 3px solid #10b981;
+}
+
+.modern-locker-card.card-occupied {
+  border-top: 3px solid #f59e0b;
+}
+
+.modern-locker-card.door-is-open {
+  border-color: #86efac;
+  background-color: #f0fdf4;
+}
+
+/* Card Topbar */
+.box-card-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.box-id-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.box-badge-pill {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: monospace;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+}
+
+.size-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.size-small {
+  color: #64748b;
+  background-color: #f1f5f9;
+}
+
+.size-medium {
+  color: #0369a1;
+  background-color: #f0f9ff;
+}
+
+.size-large {
+  color: #7c3aed;
+  background-color: #f5f3ff;
+}
+
+/* Door Chip: Red when Closed, Green when Open */
+.door-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.12rem 0.5rem;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.chip-closed {
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.chip-open {
+  color: #059669;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+/* Card Content Area */
+.box-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.4rem 0;
+}
+
+/* Available State */
+.avail-info-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.avail-status-line {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.avail-green-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #10b981;
+}
+
+.avail-heading {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #059669;
+}
+
+.avail-sub-label {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  padding-left: 0.75rem;
+}
+
+/* Occupied State */
+.occupied-info-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.occupied-order-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.occupied-order-id {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #0284c7;
+  font-family: monospace;
+}
+
+.occupied-time-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.625rem;
+  color: #94a3b8;
+}
+
+.occupied-customer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cust-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.cust-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.occupied-service-line {
+  font-size: 0.6875rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card Footer Actions */
+.box-card-footer {
+  margin-top: 0.65rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-door-action {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-door-action.btn-open {
+  background-color: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-door-action.btn-open:hover {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.btn-door-action.btn-lock {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+}
+
+.btn-door-action.btn-lock:hover {
+  background-color: #fee2e2;
+}
+
+/* ------------------------------------------------------------- */
+/* 4. INTERACTIVE INSPECTOR MODAL OVERLAY                        */
+/* ------------------------------------------------------------- */
+.locker-inspector-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlay-fade 0.15s ease-out;
+}
+
+@keyframes overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.locker-inspector-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  width: 480px;
+  max-width: 90vw;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: card-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes card-pop {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.inspector-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.inspector-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.inspector-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.inspector-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.inspector-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.inspector-row-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.inspector-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.col-label {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.col-value {
+  font-size: 0.8125rem;
+  color: #0f172a;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-red {
+  color: #dc2626;
+}
+
+.text-sky {
+  color: #0284c7;
+}
+
+.inspector-occupied-details {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  background-color: #ffffff;
+}
+
+.details-heading {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.65rem;
+  text-transform: uppercase;
+}
+
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+}
+
+.item-label {
+  color: #64748b;
+}
+
+.item-value {
+  color: #0f172a;
+}
+
+.monospace {
+  font-family: monospace;
+}
+
+.inspector-avail-details {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.avail-detail-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.avail-detail-desc {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.75rem;
+  color: #166534;
+  line-height: 1.4;
+}
+
+.inspector-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inspector-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inspector-action-btn.btn-open {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+}
+
+.inspector-action-btn.btn-open:hover {
+  background-color: #1e293b;
+}
+
+.inspector-action-btn.btn-lock {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.inspector-action-btn.btn-lock:hover {
+  background-color: #fee2e2;
+}

@@ -139,6 +139,29 @@ export function AuthProvider(props) {
     });
   }
 
+  // Logs in as Central Facility Laundry Operator / Station Staff
+  // In Vanilla JS: window.appState.user = { name, role: 'operator', station };
+  function loginAsOperator(operatorName, stationName) {
+    let nameToUse = 'Elena Rostova';
+    if (operatorName && operatorName.trim().length > 0) {
+      nameToUse = operatorName.trim();
+    }
+
+    let stationToUse = 'Central Laundry Hub (Station #01)';
+    if (stationName && stationName.trim().length > 0) {
+      stationToUse = stationName.trim();
+    }
+
+    setUser({
+      name: nameToUse,
+      initials: 'ER',
+      phone: '919 555 3322',
+      role: ROLES.OPERATOR,
+      station: stationToUse,
+      location: 'Central Laundry Facility',
+    });
+  }
+
   // Updates active order status and attaches laundry bag, locker, and delivery claim fields
   function updateOrderStatus(orderId, newStatus, extraData) {
     if (!activeOrder) {
@@ -160,6 +183,9 @@ export function AuthProvider(props) {
       }
       if (extraData.weightKg) {
         updated.weightKg = extraData.weightKg;
+      }
+      if (extraData.finalAmountDue) {
+        updated.priceEstimate = extraData.finalAmountDue;
       }
       if (extraData.isPaid !== undefined) {
         updated.isPaid = extraData.isPaid;
@@ -240,6 +266,7 @@ export function AuthProvider(props) {
     loginAsCustomer: loginAsCustomer,
     signupCustomer: signupCustomer,
     loginAsRider: loginAsRider,
+    loginAsOperator: loginAsOperator,
     updateOrderStatus: updateOrderStatus,
     logout: logout,
     createOrder: createOrder,

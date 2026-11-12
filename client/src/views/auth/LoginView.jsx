@@ -8,7 +8,8 @@ import {
   UserPlus, 
   LogIn,
   X,
-  AlertCircle 
+  AlertCircle,
+  Monitor
 } from 'lucide-react';
 import './LoginView.css';
 
@@ -449,6 +450,24 @@ export function LoginView() {
                 </div>
               </div>
               <ArrowRight size={16} className="guest-arrow rider-arrow" />
+            </button>
+
+            {/* Facility Operator & Laundry Staff Access Portal */}
+            <button
+              type="button"
+              onClick={function () { auth.loginAsOperator(); }}
+              className="operator-action-card"
+            >
+              <div className="operator-card-left">
+                <div className="operator-icon-circle">
+                  <Monitor size={17} />
+                </div>
+                <div className="operator-info">
+                  <span className="operator-title">Facility Operator & Staff</span>
+                  <span className="operator-desc">Weighing, wash cycles & locker telemetry</span>
+                </div>
+              </div>
+              <ArrowRight size={16} className="guest-arrow operator-arrow" />
             </button>
 
           </div>

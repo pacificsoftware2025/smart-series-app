@@ -5,6 +5,7 @@ import { LoginView } from './views/auth/LoginView';
 import { MobileShell } from './components/layout/MobileShell';
 import { CustomerView } from './views/customer/CustomerView';
 import { DriverView } from './views/driver/DriverView';
+import { OperatorView } from './views/operator/OperatorView';
 
 // ==============================================================================
 // REACT COMPONENT: App
@@ -12,6 +13,7 @@ import { DriverView } from './views/driver/DriverView';
 // In Vanilla JS:
 //   if (!user) renderLogin();
 //   else if (user.role === 'rider') renderDriverView();
+//   else if (user.role === 'operator') renderOperatorView();
 //   else renderCustomerView();
 // ==============================================================================
 export default function App() {
@@ -30,6 +32,11 @@ export default function App() {
   // RBAC Driver Route: If user has RIDER role, render dedicated field portal
   if (user.role === ROLES.RIDER) {
     return <DriverView />;
+  }
+
+  // RBAC Operator Route: If user has OPERATOR role, render desktop workstation portal
+  if (user.role === ROLES.OPERATOR) {
+    return <OperatorView />;
   }
 
   // Customer / Guest Route: Wrapped inside standard MobileShell frame

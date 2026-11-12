@@ -667,6 +667,7 @@
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: left;
+  margin-bottom: 0.65rem;
 }
 
 .rider-action-card:hover {
@@ -688,6 +689,83 @@
 .rider-action-card:hover .rider-arrow {
   transform: translateX(2px);
   color: #0284c7;
+}
+
+/* Facility Operator & Staff Action Card */
+.operator-action-card {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid var(--slate-200);
+  background-color: var(--slate-50);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.operator-action-card:hover {
+  background-color: #faf5ff;
+  border-color: #c084fc;
+  box-shadow: 0 4px 12px -2px rgba(147, 51, 234, 0.12);
+}
+
+.operator-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.operator-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  border: 1px solid var(--slate-200);
+  color: var(--slate-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.operator-action-card:hover .operator-icon-circle {
+  background-color: #f3e8ff;
+  color: #9333ea;
+  border-color: #d8b4fe;
+}
+
+.operator-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.operator-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.operator-action-card:hover .operator-title {
+  color: #0f172a;
+}
+
+.operator-desc {
+  font-size: 0.6875rem;
+  color: var(--slate-400);
+}
+
+.operator-arrow {
+  color: var(--slate-400);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.operator-action-card:hover .operator-arrow {
+  transform: translateX(2px);
+  color: #9333ea;
 }
 
 /* Rider Disabled Card */
