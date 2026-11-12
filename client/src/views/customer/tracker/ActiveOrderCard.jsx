@@ -485,45 +485,50 @@ export function ActiveOrderCard(props) {
 
         {/* ------------------------------------------------------------- */}
         {/* ORDER SPECIFICATIONS & PREFERENCES CARD                       */}
+        {/* Rendered only during active intake, transit & wash stages.     */}
+        {/* Hidden in Step 4 (Delivered & Payment Due) to eliminate       */}
+        {/* redundant information above the billing checkout invoice.     */}
         {/* ------------------------------------------------------------- */}
-        <div className="order-specs-card">
-          <div className="specs-card-header">
-            <h4 className="specs-card-title">Order Specifications</h4>
-            <span className="specs-hub-tag">Central Hub</span>
-          </div>
-
-          <div className="specs-grid-2">
-            <div className="spec-item">
-              <span className="spec-label">Service Type:</span>
-              <span className="spec-value-strong">{activeOrder.serviceType}</span>
+        {currentStep < 4 && (
+          <div className="order-specs-card">
+            <div className="specs-card-header">
+              <h4 className="specs-card-title">Order Specifications</h4>
+              <span className="specs-hub-tag">Central Hub</span>
             </div>
-            <div className="spec-item">
-              <span className="spec-label">Load Size:</span>
-              <span className="spec-value-strong">{activeOrder.loadSize}</span>
-            </div>
-          </div>
 
-          {/* Preferences Badges Row */}
-          <div className="specs-badges-row">
-            <span className={getTemperatureBadgeClass(activeOrder.temperature)}>
-              {activeOrder.temperature}
-            </span>
-            <span className={getSoftenerBadgeClass(activeOrder.fabricSoftener)}>
-              {getFabricSoftenerText(activeOrder.fabricSoftener)}
-            </span>
-            <span className="spec-badge-chip est-weight-chip">
-              Est. {displayWeight} kg
-            </span>
-          </div>
-
-          {/* Special Instructions Note (Shown only when present) */}
-          {showSpecialNotes && (
-            <div className="specs-note-callout">
-              <span className="notes-label">Special Notes:</span>
-              <span className="notes-content">"{activeOrder.specialInstructions}"</span>
+            <div className="specs-grid-2">
+              <div className="spec-item">
+                <span className="spec-label">Service Type:</span>
+                <span className="spec-value-strong">{activeOrder.serviceType}</span>
+              </div>
+              <div className="spec-item">
+                <span className="spec-label">Load Size:</span>
+                <span className="spec-value-strong">{activeOrder.loadSize}</span>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Preferences Badges Row */}
+            <div className="specs-badges-row">
+              <span className={getTemperatureBadgeClass(activeOrder.temperature)}>
+                {activeOrder.temperature}
+              </span>
+              <span className={getSoftenerBadgeClass(activeOrder.fabricSoftener)}>
+                {getFabricSoftenerText(activeOrder.fabricSoftener)}
+              </span>
+              <span className="spec-badge-chip est-weight-chip">
+                Est. {displayWeight} kg
+              </span>
+            </div>
+
+            {/* Special Instructions Note (Shown only when present) */}
+            {showSpecialNotes && (
+              <div className="specs-note-callout">
+                <span className="notes-label">Special Notes:</span>
+                <span className="notes-content">"{activeOrder.specialInstructions}"</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ------------------------------------------------------------- */}
         {/* STAGE 4: DELIVERY COMPLETE & PAYMENT INVOICE (Before Payment)  */}

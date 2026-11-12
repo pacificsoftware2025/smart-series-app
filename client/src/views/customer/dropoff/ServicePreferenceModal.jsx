@@ -191,7 +191,8 @@ export function ServicePreferenceModal(props) {
         {/* ------------------------------------------------------------- */}
         {unlockedSuccess && (
           <div className="unlock-success-panel">
-            <div className="header-badges-row" style={{ marginBottom: '1rem' }}>
+            {/* Top Badges */}
+            <div className="success-top-badges">
               <span className="station-code-pill">
                 <span className="live-pulse-dot"></span> {stationId}
               </span>
@@ -200,16 +201,42 @@ export function ServicePreferenceModal(props) {
               </span>
             </div>
 
-            <div className="success-icon-box">
-              <Unlock size={32} />
+            {/* Glowing Hero Icon with Ring Animation */}
+            <div className="success-icon-halo">
+              <div className="success-icon-box">
+                <Unlock size={32} strokeWidth={2.4} />
+              </div>
             </div>
             
+            {/* Headline and Status */}
             <h4 className="success-headline">Locker Box #{assignedBox} Is Open!</h4>
-            
-            <p className="success-instruction">
-              Place your laundry bag inside and close the locker door securely.
-            </p>
+            <div className="success-status-pill">
+              <span className="pulse-dot-green"></span>
+              <span>Compartment Door Unlatched</span>
+            </div>
 
+            {/* 2-Step Action Instructions Card */}
+            <div className="success-steps-card">
+              <div className="success-step-item">
+                <div className="step-num-badge">1</div>
+                <div className="step-text-content">
+                  <span className="step-title">Place laundry bag inside</span>
+                  <span className="step-sub">Deposit items into Compartment #{assignedBox}</span>
+                </div>
+              </div>
+
+              <div className="step-divider-line"></div>
+
+              <div className="success-step-item">
+                <div className="step-num-badge">2</div>
+                <div className="step-text-content">
+                  <span className="step-title">Close door firmly</span>
+                  <span className="step-sub">Push until you hear it click and lock securely</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Primary Action Button */}
             <button
               type="button"
               onClick={handleConfirmClosedAndRedirect}
@@ -363,7 +390,7 @@ export function ServicePreferenceModal(props) {
               {isUnlocking && (
                 <div className="btn-unlocking-state">
                   <div className="button-spinner"></div>
-                  <span>Actuating Solenoid Relay Box #{assignedBox}...</span>
+                  <span>Opening Locker Box #{assignedBox}...</span>
                 </div>
               )}
               {!isUnlocking && (

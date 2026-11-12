@@ -534,27 +534,44 @@
 }
 
 /* ==========================================================================
-   UNLOCK SUCCESS PANEL
+   UNLOCK SUCCESS PANEL (Redesigned)
    ========================================================================== */
 .unlock-success-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1.5rem 0.5rem 1rem;
+  padding: 1.25rem 0.5rem 0.75rem;
 }
 
-.success-icon-box {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background-color: var(--emerald-50);
-  border: 2px solid #bbf7d0;
-  color: var(--emerald-600);
+.success-top-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Glowing Pulse Halo around Icon */
+.success-icon-halo {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
+}
+
+.success-icon-box {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #a7f3d0;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.12), 0 0 0 16px rgba(16, 185, 129, 0.05);
   animation: bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -564,41 +581,126 @@
 }
 
 .success-headline {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--slate-900);
   margin-bottom: 0.35rem;
+  letter-spacing: -0.01em;
 }
 
-.success-instruction {
-  font-size: 0.75rem;
-  color: var(--slate-500);
-  max-width: 280px;
-  line-height: 1.45;
+/* Status Pill: Compartment Door Unlatched */
+.success-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.75rem;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #047857;
   margin-bottom: 1.25rem;
 }
 
+.pulse-dot-green {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  70% { transform: scale(1); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* 2-Step Action Instructions Card */
+.success-steps-card {
+  width: 100%;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.35rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-sizing: border-box;
+}
+
+.success-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.step-num-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background-color: #059669;
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-text-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  line-height: 1.25;
+}
+
+.step-sub {
+  font-size: 0.6875rem;
+  color: var(--slate-500);
+  margin-top: 0.15rem;
+  line-height: 1.35;
+}
+
+.step-divider-line {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 0.1rem 0;
+}
+
+/* Primary Action Button */
 .confirm-closed-btn {
   width: 100%;
-  padding: 0.9375rem 1.25rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--emerald-600) 0%, var(--emerald-800) 100%);
+  padding: 0.85rem 1.25rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   border: none;
   color: #ffffff;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 10px 20px -3px rgba(5, 150, 105, 0.35);
+  box-shadow: 0 8px 18px -3px rgba(5, 150, 105, 0.35);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .confirm-closed-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 25px -4px rgba(5, 150, 105, 0.45);
+  box-shadow: 0 12px 24px -4px rgba(5, 150, 105, 0.45);
 }
 
 .confirm-closed-btn:active {
