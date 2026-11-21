@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Truck, 
@@ -10,84 +10,78 @@ import {
   CheckCircle2, 
   Clock,
   Box,
-  PackageCheck
+  PackageCheck,
+  Loader2
 } from 'lucide-react';
 import { PickupQueueList } from './pickup/PickupQueueList';
 import { PickupWorkflowModal } from './pickup/PickupWorkflowModal';
 import { DeliveryQueueList } from './delivery/DeliveryQueueList';
 import { DeliveryWorkflowModal } from './delivery/DeliveryWorkflowModal';
+import { fetchOrders, collectOrder, deliverCleanOrder } from '../../services/api';
 import './DriverView.css';
 
-// Initial default route drop-offs for testing
-const INITIAL_MOCK_PENDING = [
-  {
-    id: 'ORD-8421',
-    distanceKm: 0.3,
-    distanceText: '0.3 km away',
-    stationName: 'Central Mall Hub (Level 1 East)',
-    lockerNumber: '03',
-    customerName: 'Jamie Davis',
-    serviceType: 'Wash, Dry & Fold',
-    loadSize: 'Medium (5.2kg)',
-    droppedTime: 'Dropped 18m ago',
-    status: 'dropped_off',
-  },
-  {
-    id: 'ORD-7719',
-    distanceKm: 1.2,
-    distanceText: '1.2 km away',
-    stationName: 'North Plaza Hub (Tower B Ground)',
-    lockerNumber: '07',
-    customerName: 'Carlos Mendoza',
-    serviceType: 'Wash & Dry',
-    loadSize: 'Large (7.8kg)',
-    droppedTime: 'Dropped 35m ago',
-    status: 'dropped_off',
-  },
-  {
-    id: 'ORD-6204',
-    distanceKm: 3.5,
-    distanceText: '3.5 km away',
-    stationName: 'Greenbelt Transit Hub (Bay 4)',
-    lockerNumber: '11',
-    customerName: 'Patricia Reyes',
-    serviceType: 'Wash Only',
-    loadSize: 'Small (3.5kg)',
-    droppedTime: 'Dropped 1h ago',
-    status: 'dropped_off',
-  },
-];
+// Helper to format timestamps into relative time
+function formatRelativeTime(timestamp) {
+  if (!timestamp) return 'Dropped recently';
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diffMs = now - past;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMins / 60);
 
-// Initial default clean laundry return packages in the van (Any available box allocated at destination)
-const INITIAL_MOCK_DELIVERIES = [
-  {
-    id: 'ORD-5192',
+  if (diffMins < 1) return 'Dropped just now';
+  if (diffMins < 60) return `Dropped ${diffMins}m ago`;
+  if (diffHours < 24) return `Dropped ${diffHours}h ago`;
+  return past.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Maps backend order to Pickup card
+function mapPendingOrder(o) {
+  return {
+    id: o.id,
     distanceKm: 0.3,
     distanceText: '0.3 km away',
-    stationName: 'Central Mall Hub (Level 1 East)',
-    laundryBagNumber: 'BAG-6910',
-    customerName: 'Roberto Tan',
-    serviceType: 'Wash, Dry & Fold',
-    weightKg: 4.9,
-    status: 'in_wash',
-  },
-  {
-    id: 'ORD-4088',
-    distanceKm: 1.2,
-    distanceText: '1.2 km away',
-    stationName: 'North Plaza Hub (Tower B Ground)',
-    laundryBagNumber: 'BAG-5512',
-    customerName: 'Elena Cruz',
-    serviceType: 'Wash & Dry',
-    weightKg: 3.8,
-    status: 'in_wash',
-  },
-];
+    stationName: `Central Mall Hub (${o.station_id || 'CMH-01'})`,
+    lockerNumber: String(o.dropoff_box_number || o.compartment_number || '01').padStart(2, '0'),
+    customerName: o.customer_name || 'Customer',
+    serviceType: o.service_tier || 'Wash, Dry & Fold',
+    loadSize: o.service_size || 'Medium (7kg)',
+    droppedTime: formatRelativeTime(o.created_at),
+    status: o.status,
+  };
+}
+
+// Maps backend order to Delivery card
+function mapDeliveryOrder(o) {
+  const digits = String(o.id).replace(/\D/g, '');
+  let tagSuffix = '8821';
+  if (digits.length >= 4) {
+    tagSuffix = digits.slice(-4);
+  }
+  const tagCode = 'BAG-' + tagSuffix;
+
+  let finalWeight = 5.2;
+  if (o.weight_kg) {
+    finalWeight = parseFloat(o.weight_kg);
+  }
+
+  return {
+    id: o.id,
+    distanceKm: 0.3,
+    distanceText: '0.3 km away',
+    stationName: `Central Mall Hub (${o.station_id || 'CMH-01'})`,
+    laundryBagNumber: tagCode,
+    customerName: o.customer_name || 'Customer',
+    serviceType: o.service_tier || 'Wash, Dry & Fold',
+    weightKg: finalWeight,
+    status: o.status,
+  };
+}
 
 // ==============================================================================
 // REACT COMPONENT: DriverView
 // Mobile-first field operations portal for route van drivers.
-// Structured around two actionable route tasks:
+// Structured around two actionable live cloud route tasks:
 //   Tab 1: PICKUPS (Dirty clothes from locker boxes into van)
 //   Tab 2: DELIVERIES (Clean clothes from van into locker boxes)
 // ==============================================================================
@@ -100,72 +94,12 @@ export function DriverView() {
 
   // Active Tab: 'pickups' or 'deliveries'
   const [activeDriverTab, setActiveDriverTab] = useState('pickups');
-  const [completedCount, setCompletedCount] = useState(14);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Pending Pickups Queue
-  const [pendingOrders, setPendingOrders] = useState(function () {
-    // If there is an active order in AuthContext in 'dropped_off' state, merge it
-    if (activeOrder && activeOrder.status === 'dropped_off') {
-      const merged = INITIAL_MOCK_PENDING.slice();
-      let activeCustomerName = 'Jamie Davis';
-      if (user && user.name) {
-        activeCustomerName = user.name;
-      }
-      let activeLockerBox = '03';
-      if (activeOrder.lockerNumber) {
-        activeLockerBox = activeOrder.lockerNumber;
-      }
-      let activeService = 'Wash, Dry & Fold';
-      if (activeOrder.serviceType) {
-        activeService = activeOrder.serviceType;
-      }
-      let activeLoad = 'Medium (5.2kg)';
-      if (activeOrder.loadSize) {
-        activeLoad = activeOrder.loadSize;
-      }
-
-      merged[0] = Object.assign({}, merged[0], {
-        id: activeOrder.id,
-        lockerNumber: activeLockerBox,
-        serviceType: activeService,
-        customerName: activeCustomerName,
-        loadSize: activeLoad,
-      });
-      return merged;
-    }
-    return INITIAL_MOCK_PENDING;
-  });
-
-  // Clean Deliveries Queue
-  const [deliveryOrders, setDeliveryOrders] = useState(function () {
-    // If active order is in 'in_wash' or 'rider_transit', integrate as a delivery
-    if (activeOrder && (activeOrder.status === 'in_wash' || activeOrder.status === 'rider_transit')) {
-      const mergedDeliveries = INITIAL_MOCK_DELIVERIES.slice();
-      let activeCust = 'Jamie Davis';
-      if (user && user.name) {
-        activeCust = user.name;
-      }
-      let activeBag = 'BAG-8821';
-      if (activeOrder.laundryBagNumber) {
-        activeBag = activeOrder.laundryBagNumber;
-      }
-
-      mergedDeliveries.unshift({
-        id: activeOrder.id,
-        distanceKm: 0.3,
-        distanceText: '0.3 km away',
-        stationName: 'Central Mall Hub (Level 1 East)',
-        pickupBoxNumber: '06',
-        laundryBagNumber: activeBag,
-        customerName: activeCust,
-        serviceType: activeOrder.serviceType || 'Wash, Dry & Fold',
-        weightKg: activeOrder.weightKg || 5.2,
-        status: 'in_wash',
-      });
-      return mergedDeliveries;
-    }
-    return INITIAL_MOCK_DELIVERIES;
-  });
+  // Live route queues
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [deliveryOrders, setDeliveryOrders] = useState([]);
 
   // Workflow Modal States
   const [selectedPickupOrder, setSelectedPickupOrder] = useState(null);
@@ -191,8 +125,38 @@ export function DriverView() {
     }
   }
 
+  // Load live tasks from cloud database
+  const loadRouteData = useCallback(async function () {
+    try {
+      const allOrders = await fetchOrders();
+      if (Array.isArray(allOrders)) {
+        // 1. Pickups: orders with status 'dropped_off' (dirty laundry in locker)
+        const droppedOff = allOrders.filter(o => o.status === 'dropped_off');
+        setPendingOrders(droppedOff.map(mapPendingOrder));
+
+        // 2. Deliveries: orders with status 'in_wash' or 'in_transit' returning clean
+        const toDeliver = allOrders.filter(o => o.status === 'in_wash');
+        setDeliveryOrders(toDeliver.map(mapDeliveryOrder));
+
+        // 3. Completed count
+        const completed = allOrders.filter(o => o.status === 'completed');
+        setCompletedCount(completed.length);
+      }
+    } catch (err) {
+      console.warn('[DriverView] Error fetching route queues:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRouteData();
+    const interval = setInterval(loadRouteData, 5000);
+    return () => clearInterval(interval);
+  }, [loadRouteData]);
+
   // ============================================================================
-  // HANDLERS: Pickup Workflow
+  // HANDLERS: Pickup Workflow (Dirty Clothes Collection)
   // ============================================================================
   function handleStartPickup(order) {
     setSelectedPickupOrder(order);
@@ -204,44 +168,30 @@ export function DriverView() {
     setSelectedPickupOrder(null);
   }
 
-  function handleConfirmPickup(order, bagTag) {
-    let lockerBox = '03';
-    if (order.lockerNumber) {
-      lockerBox = order.lockerNumber;
-    }
+  async function handleConfirmPickup(order, bagTag) {
+    try {
+      // 1. Post collection to live backend
+      await collectOrder(order.id);
 
-    // 1. Remove from Pending Orders list
-    const remainingPending = pendingOrders.filter(function (item) {
-      return item.id !== order.id;
-    });
-    setPendingOrders(remainingPending);
+      // 2. Refresh local queues
+      loadRouteData();
 
-    // 2. Add as clean delivery in van (ready for return)
-    const newDelivery = {
-      id: order.id,
-      distanceKm: order.distanceKm || 0.3,
-      distanceText: order.distanceText || '0.3 km away',
-      stationName: order.stationName || 'Central Mall Hub',
-      pickupBoxNumber: '06',
-      laundryBagNumber: bagTag,
-      customerName: order.customerName || 'Customer',
-      serviceType: order.serviceType || 'Wash, Dry & Fold',
-      weightKg: 5.2,
-      status: 'in_wash',
-    };
-    setDeliveryOrders([newDelivery, ...deliveryOrders]);
-
-    // 3. Sync customer status
-    if (updateOrderStatus && activeOrder && activeOrder.id === order.id) {
-      updateOrderStatus(order.id, 'rider_transit', {
-        lockerNumber: lockerBox,
-        laundryBagNumber: bagTag,
-      });
+      // 3. Sync customer status
+      if (updateOrderStatus && activeOrder && activeOrder.id === order.id) {
+        updateOrderStatus(order.id, 'rider_transit', {
+          lockerNumber: order.lockerNumber,
+          laundryBagNumber: bagTag,
+        });
+      }
+    } catch (err) {
+      console.warn('[DriverView] Collect order error:', err);
+      // Fallback local update
+      setPendingOrders(prev => prev.filter(item => item.id !== order.id));
     }
   }
 
   // ============================================================================
-  // HANDLERS: Delivery Workflow (Returning clean clothes to locker)
+  // HANDLERS: Delivery Workflow (Clean Clothes Return to Locker)
   // ============================================================================
   function handleStartDelivery(delivery) {
     setSelectedDeliveryOrder(delivery);
@@ -253,38 +203,49 @@ export function DriverView() {
     setSelectedDeliveryOrder(null);
   }
 
-  function handleConfirmDelivery(order, deliveryData) {
+  async function handleConfirmDelivery(order, deliveryData) {
     let returnBox = '06';
     if (deliveryData && deliveryData.pickupBoxNumber) {
       returnBox = deliveryData.pickupBoxNumber;
     }
 
-    let claimPin = '842019';
+    let finalPin = '842019';
     if (deliveryData && deliveryData.claimPin) {
-      claimPin = deliveryData.claimPin;
+      finalPin = deliveryData.claimPin;
     }
 
-    // 1. Remove from Delivery Queue
-    const remainingDeliveries = deliveryOrders.filter(function (item) {
-      return item.id !== order.id;
-    });
-    setDeliveryOrders(remainingDeliveries);
-    setCompletedCount(completedCount + 1);
+    try {
+      // 1. Post delivery to live backend if not already executed by modal
+      if (!deliveryData || !deliveryData.deliveredOnServer) {
+        await deliverCleanOrder(order.id, returnBox, 'CMH-01');
+      }
 
-    // 2. Advance customer active order to Stage 4 (ready_for_pickup)
-    if (updateOrderStatus && activeOrder && activeOrder.id === order.id) {
-      updateOrderStatus(order.id, 'ready_for_pickup', {
-        pickupBoxNumber: returnBox,
-        claimPin: claimPin,
-        isPaid: false,
+      // 2. Refresh live queues from cloud database
+      loadRouteData();
+
+      // 3. Advance customer active order to ready_for_pickup
+      if (updateOrderStatus && activeOrder && activeOrder.id === order.id) {
+        updateOrderStatus(order.id, 'ready_for_pickup', {
+          pickupBoxNumber: returnBox,
+          claimPin: finalPin,
+          isPaid: false,
+        });
+      }
+    } catch (err) {
+      console.warn('[DriverView] Deliver order error:', err);
+      setDeliveryOrders(function (prev) {
+        return prev.filter(function (item) {
+          return item.id !== order.id;
+        });
+      });
+      setCompletedCount(function (prev) {
+        return prev + 1;
       });
     }
   }
 
   function handleResetRoute() {
-    setPendingOrders(INITIAL_MOCK_PENDING);
-    setDeliveryOrders(INITIAL_MOCK_DELIVERIES);
-    setCompletedCount(14);
+    loadRouteData();
   }
 
   function getDriverTabClass(tabKey) {
@@ -298,9 +259,7 @@ export function DriverView() {
     <div className="driver-viewport">
       <div className="driver-device-frame">
         
-        {/* ------------------------------------------------------------- */}
-        {/* STATUS BAR (9:41, Notch, BLE, 5G, GPS Online)                 */}
-        {/* ------------------------------------------------------------- */}
+        {/* STATUS BAR */}
         <div className="driver-status-bar">
           <span className="status-clock">9:41</span>
           <div className="notch-island"></div>
@@ -310,9 +269,7 @@ export function DriverView() {
           </div>
         </div>
 
-        {/* ------------------------------------------------------------- */}
-        {/* DRIVER PROFILE HEADER                                         */}
-        {/* ------------------------------------------------------------- */}
+        {/* DRIVER PROFILE HEADER */}
         <header className="driver-app-header">
           <div className="driver-header-top">
             <div className="driver-avatar-group">
@@ -331,15 +288,15 @@ export function DriverView() {
 
             <div className="driver-actions">
               <button 
-                type="button"
+                type="button" 
                 onClick={handleResetRoute}
                 className="driver-icon-btn"
-                title="Reset Route Tasks"
+                title="Sync Live Route Tasks"
               >
                 <RefreshCw size={17} />
               </button>
               <button 
-                type="button"
+                type="button" 
                 onClick={logout}
                 className="driver-icon-btn logout-accent"
                 title="Exit Driver Portal / Switch Role"
@@ -388,32 +345,37 @@ export function DriverView() {
           </div>
         </header>
 
-        {/* ------------------------------------------------------------- */}
-        {/* MAIN BODY (Scrollable Queue)                                  */}
-        {/* ------------------------------------------------------------- */}
+        {/* MAIN BODY */}
         <main className="driver-scroll-body">
-          
-          {/* TAB 1: PICKUP ROUTE (Locker -> Van) */}
-          {activeDriverTab === 'pickups' && (
-            <PickupQueueList 
-              orders={pendingOrders}
-              onStartPickup={handleStartPickup}
-            />
+          {isLoading && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', gap: '0.5rem', color: '#64748b' }}>
+              <Loader2 size={18} className="relay-spinner" />
+              <span style={{ fontSize: '0.875rem' }}>Syncing route tasks from database...</span>
+            </div>
           )}
 
-          {/* TAB 2: DELIVERY ROUTE (Van -> Locker) */}
-          {activeDriverTab === 'deliveries' && (
-            <DeliveryQueueList 
-              deliveries={deliveryOrders}
-              onStartDelivery={handleStartDelivery}
-            />
-          )}
+          {!isLoading && (
+            <>
+              {/* TAB 1: PICKUP ROUTE (Locker -> Van) */}
+              {activeDriverTab === 'pickups' && (
+                <PickupQueueList 
+                  orders={pendingOrders}
+                  onStartPickup={handleStartPickup}
+                />
+              )}
 
+              {/* TAB 2: DELIVERY ROUTE (Van -> Locker) */}
+              {activeDriverTab === 'deliveries' && (
+                <DeliveryQueueList 
+                  deliveries={deliveryOrders}
+                  onStartDelivery={handleStartDelivery}
+                />
+              )}
+            </>
+          )}
         </main>
 
-        {/* ------------------------------------------------------------- */}
-        {/* MODAL 1: PICKUP WORKFLOW (Arrive -> Scan QR -> Tag -> Swipe)  */}
-        {/* ------------------------------------------------------------- */}
+        {/* MODAL 1: PICKUP WORKFLOW */}
         <PickupWorkflowModal 
           isOpen={isPickupModalOpen}
           onClose={handleClosePickupModal}
@@ -421,9 +383,7 @@ export function DriverView() {
           onConfirmPickup={handleConfirmPickup}
         />
 
-        {/* ------------------------------------------------------------- */}
-        {/* MODAL 2: DELIVERY WORKFLOW (Verify Bag -> Pop Box -> Swipe)   */}
-        {/* ------------------------------------------------------------- */}
+        {/* MODAL 2: DELIVERY WORKFLOW */}
         <DeliveryWorkflowModal 
           isOpen={isDeliveryModalOpen}
           onClose={handleCloseDeliveryModal}

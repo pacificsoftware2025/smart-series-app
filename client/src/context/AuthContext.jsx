@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { ROLES } from '../constants/roles';
+import { createDropoffOrder } from '../services/api';
 
 // ==============================================================================
 // REACT CONTEXT explained in Vanilla JS:
@@ -195,7 +196,7 @@ export function AuthProvider(props) {
   }
 
   // Creates an active order after the customer unlocks a locker
-  function createOrder(orderData) {
+  async function createOrder(orderData) {
     let size = 'Medium (Max 7kg)';
     if (orderData && orderData.loadSize) {
       size = orderData.loadSize;
@@ -237,12 +238,49 @@ export function AuthProvider(props) {
       fabricSoftener = orderData.fabricSoftener;
     }
 
+    const customerName = (user && user.name) || 'Customer';
+    const customerPhone = (user && user.phone) || '+63 917 000 0000';
+
+    try {
+      const res = await createDropoffOrder({
+        customerName: customerName,
+        contactNumber: customerPhone,
+        stationId: 'CMH-01',
+        serviceTier: serviceType,
+        serviceSize: size,
+        temperature: temperature,
+        fabricSoftener: fabricSoftener,
+        specialInstructions: specialInstructions,
+      });
+
+      if (res && res.data) {
+        const liveOrder = {
+          id: res.data.orderId,
+          createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: 'dropped_off',
+          lockerNumber: String(res.data.compartmentNumber || res.data.boxNumber || lockerNumber).padStart(2, '0'),
+          serviceType: serviceType,
+          loadSize: size,
+          specialInstructions: specialInstructions,
+          temperature: temperature,
+          fabricSoftener: fabricSoftener,
+          estimatedReady: 'Today, 6:30 PM',
+          weightKg: estimatedKg,
+          priceEstimate: estimatedPrice,
+        };
+        setActiveOrder(liveOrder);
+        return;
+      }
+    } catch (err) {
+      console.warn('[AuthContext] Dropoff API failed, falling back to local state:', err);
+    }
+
     const randomId = Math.floor(1000 + Math.random() * 9000);
 
     const newOrder = {
       id: 'ORD-' + randomId,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'in_wash',
+      status: 'dropped_off',
       lockerNumber: lockerNumber,
       serviceType: serviceType,
       loadSize: size,

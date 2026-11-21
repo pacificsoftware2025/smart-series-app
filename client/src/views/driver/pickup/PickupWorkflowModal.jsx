@@ -13,7 +13,8 @@ import {
   Sparkles,
   Package,
   MapPin,
-  Clock
+  Clock,
+  Keyboard
 } from 'lucide-react';
 import { SwipeConfirmButton } from '../common/SwipeConfirmButton';
 import './PickupWorkflowModal.css';
@@ -26,25 +27,32 @@ import './PickupWorkflowModal.css';
 //   Step 3: "Swipe confirm pickup" (moves order to van transit)
 // ==============================================================================
 export function PickupWorkflowModal(props) {
+  // Vanilla JS Analogy: Props are function arguments (function Modal(props)).
+  // We extract them explicitly into local constants rather than dense destructuring.
   const isOpen = props.isOpen;
   const onClose = props.onClose;
   const order = props.order;
   const onConfirmPickup = props.onConfirmPickup;
 
-  // Workflow steps: 1 = Scan Compartment, 2 = Scan Bag Tag, 3 = Swipe Confirm, 4 = Success
+  // Vanilla JS Analogy: useState is like declaring 'let currentStep = 1'.
+  // Calling setCurrentStep(2) updates the value and instructs React to re-render the UI.
   const [currentStep, setCurrentStep] = useState(1);
   const [flashlightOn, setFlashlightOn] = useState(false);
   const [compartmentUnlocked, setCompartmentUnlocked] = useState(false);
   const [scannedBagTag, setScannedBagTag] = useState('');
   const [isActuatingRelay, setIsActuatingRelay] = useState(false);
+  const [inputMethod, setInputMethod] = useState('scan'); // 'scan' | 'manual'
+  const [manualTagInput, setManualTagInput] = useState('');
 
-  // Generate a realistic Grab 'n Go bag tag number based on order or random
+  // Vanilla JS Analogy: useEffect is like an event watcher (e.g. window.addEventListener).
+  // With [isOpen, order] in the dependency array, it re-runs whenever the modal opens or order changes.
   useEffect(function () {
     if (isOpen) {
       setCurrentStep(1);
       setCompartmentUnlocked(false);
       setIsActuatingRelay(false);
       setFlashlightOn(false);
+      setInputMethod('scan');
 
       let tagNumber = '8821';
       if (order && order.id) {
@@ -53,7 +61,9 @@ export function PickupWorkflowModal(props) {
           tagNumber = digits.substring(0, 4);
         }
       }
-      setScannedBagTag('BAG-' + tagNumber);
+      const initialTag = 'BAG-' + tagNumber;
+      setScannedBagTag(initialTag);
+      setManualTagInput(initialTag);
     }
   }, [isOpen, order]);
 
@@ -63,26 +73,17 @@ export function PickupWorkflowModal(props) {
 
   // Locker & Order safe attributes
   let targetBox = '03';
-  if (order.lockerNumber) {
-    targetBox = order.lockerNumber;
-  } else if (order.dropoffBoxNumber) {
-    targetBox = order.dropoffBoxNumber;
+  if (order.dropoff_box_number) {
+    targetBox = String(order.dropoff_box_number).padStart(2, '0');
+  } else if (order.compartment_number) {
+    targetBox = String(order.compartment_number).padStart(2, '0');
+  } else if (order.lockerNumber) {
+    targetBox = String(order.lockerNumber).padStart(2, '0');
   }
 
-  let stationName = 'Central Mall Hub';
-  if (order.stationName) {
-    stationName = order.stationName;
-  }
-
-  let customerName = 'Customer';
-  if (order.customerName) {
-    customerName = order.customerName;
-  }
-
-  let serviceType = 'Wash, Dry & Fold';
-  if (order.serviceType) {
-    serviceType = order.serviceType;
-  }
+  let stationName = order.stationName || `Central Mall Hub (${order.station_id || 'CMH-01'})`;
+  let customerName = order.customerName || order.customer_name || 'Customer';
+  let serviceType = order.serviceType || order.service_tier || 'Wash, Dry & Fold';
 
   // ============================================================================
   // STEP 1 HANDLER: Actuate Locker Solenoid & Scan Box QR
@@ -102,11 +103,45 @@ export function PickupWorkflowModal(props) {
   }
 
   // ============================================================================
-  // STEP 2 HANDLER: Scan Laundry Bag Tag / Barcode
+  // STEP 2 HANDLER: Scan Laundry Bag Tag / Barcode & Manual Entry
   // ============================================================================
   function handleScanBagTag() {
     // Advance to Step 3: Swipe to Confirm
     setCurrentStep(3);
+  }
+
+  function handleSelectScanMode() {
+    setInputMethod('scan');
+  }
+
+  function handleSelectManualMode() {
+    setInputMethod('manual');
+  }
+
+  function handleManualTagChange(e) {
+    const rawVal = e.target.value.toUpperCase();
+    setManualTagInput(rawVal);
+    setScannedBagTag(rawVal);
+  }
+
+  function handleClearManualInput() {
+    setManualTagInput('');
+    setScannedBagTag('');
+  }
+
+  function handleManualInputKeyDown(e) {
+    if (e.key === 'Enter') {
+      if (scannedBagTag && scannedBagTag.trim().length > 0) {
+        handleScanBagTag();
+      }
+    }
+  }
+
+  function getOptionTabClass(methodName) {
+    if (inputMethod === methodName) {
+      return 'bag-option-tab active';
+    }
+    return 'bag-option-tab';
   }
 
   // ============================================================================
@@ -142,6 +177,30 @@ export function PickupWorkflowModal(props) {
       return 'stepper-line line-done';
     }
     return 'stepper-line';
+  }
+
+  let displayTag = '—';
+  if (scannedBagTag && scannedBagTag.trim().length > 0) {
+    displayTag = scannedBagTag;
+  }
+
+  let isConfirmDisabled = false;
+  let confirmBtnText = 'Confirm & Scan Tag #' + displayTag;
+
+  if (inputMethod === 'manual') {
+    if (!scannedBagTag || scannedBagTag.trim().length === 0) {
+      isConfirmDisabled = true;
+      confirmBtnText = 'Enter Bag Barcode to Continue';
+    } else {
+      confirmBtnText = 'Confirm Tag #' + displayTag;
+    }
+  } else {
+    if (!scannedBagTag || scannedBagTag.trim().length === 0) {
+      isConfirmDisabled = true;
+      confirmBtnText = 'Align Barcode in Viewfinder';
+    } else {
+      confirmBtnText = 'Confirm & Scan Tag #' + displayTag;
+    }
   }
 
   return (
@@ -226,7 +285,7 @@ export function PickupWorkflowModal(props) {
                   {isActuatingRelay && (
                     <div className="reticle-center-badge relay-pulse">
                       <div className="relay-spinner"></div>
-                      <span style={{ color: '#fb923c', fontWeight: 800 }}>Actuating Solenoid...</span>
+                      <span style={{ color: '#fb923c', fontWeight: 800 }}>Opening Locker Box #{targetBox}...</span>
                     </div>
                   )}
 
@@ -269,10 +328,6 @@ export function PickupWorkflowModal(props) {
 
               {compartmentUnlocked && (
                 <div className="unlocked-banner-action">
-                  <div className="unlocked-status-pill">
-                    <CheckCircle2 size={16} color="#10b981" />
-                    <span>Box #{targetBox} Solenoid Open</span>
-                  </div>
                   <button 
                     type="button" 
                     onClick={handleProceedToBagScan}
@@ -295,39 +350,101 @@ export function PickupWorkflowModal(props) {
             <div className="step-instruction-card">
               <h4 className="instruction-heading">Scan Laundry Bag Barcode</h4>
               <p className="instruction-sub">
-                Take the customer laundry from <strong>Box #{targetBox}</strong>, put it inside a Grab 'n Go van bag, and scan its barcode tag.
+                Take the customer laundry from <strong>Box #{targetBox}</strong>, put it inside a Grab 'n Go van bag, and tag it using camera scan or manual entry.
               </p>
             </div>
 
-            {/* Barcode Camera Viewfinder */}
-            <div className="driver-viewfinder-viewport barcode-view">
-              <div className="driver-viewfinder-glass">
-                <div className="driver-laser-beam barcode-laser"></div>
+            {/* Option Switcher: Choose Scan Barcode OR Manual Input */}
+            <div className="bag-scan-option-pills">
+              <button
+                type="button"
+                onClick={handleSelectScanMode}
+                className={getOptionTabClass('scan')}
+              >
+                <Camera size={14} />
+                <span>Scan Barcode</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectManualMode}
+                className={getOptionTabClass('manual')}
+              >
+                <Keyboard size={14} />
+                <span>Manual Input</span>
+              </button>
+            </div>
 
-                <div className="driver-reticle-box barcode-reticle">
-                  <div className="reticle-corner corner-tl"></div>
-                  <div className="reticle-corner corner-tr"></div>
-                  <div className="reticle-corner corner-bl"></div>
-                  <div className="reticle-corner corner-br"></div>
+            {/* OPTION A: Barcode Camera Viewfinder */}
+            {inputMethod === 'scan' && (
+              <div className="driver-viewfinder-viewport barcode-view">
+                <div className="driver-viewfinder-glass">
+                  <div className="driver-laser-beam barcode-laser"></div>
 
-                  <div className="reticle-center-badge">
-                    <Barcode size={48} className="reticle-icon-barcode" />
-                    <span className="barcode-tag-label">{scannedBagTag}</span>
+                  <div className="driver-reticle-box barcode-reticle">
+                    <div className="reticle-corner corner-tl"></div>
+                    <div className="reticle-corner corner-tr"></div>
+                    <div className="reticle-corner corner-bl"></div>
+                    <div className="reticle-corner corner-br"></div>
+
+                    <div className="reticle-center-badge">
+                      <Barcode size={48} className="reticle-icon-barcode" />
+                      <span className="barcode-tag-label">{displayTag}</span>
+                    </div>
+                  </div>
+
+                  <div className="driver-viewport-controls">
+                    <button 
+                      type="button" 
+                      onClick={handleFlashlightToggle}
+                      className={getFlashlightBtnClass()}
+                      title="Toggle Torch"
+                    >
+                      <Flashlight size={16} />
+                    </button>
                   </div>
                 </div>
-
-                <div className="driver-viewport-controls">
-                  <button 
-                    type="button" 
-                    onClick={handleFlashlightToggle}
-                    className={getFlashlightBtnClass()}
-                    title="Toggle Torch"
-                  >
-                    <Flashlight size={16} />
-                  </button>
-                </div>
               </div>
-            </div>
+            )}
+
+            {/* OPTION B: Manual Barcode Input Card */}
+            {inputMethod === 'manual' && (
+              <div className="manual-barcode-input-card">
+                <div className="manual-input-header-row">
+                  <div className="manual-input-label-meta">
+                    <Keyboard size={14} color="#ea580c" />
+                    <span className="manual-field-label">Bag Barcode / Tag #</span>
+                  </div>
+                  <span className="manual-field-hint">Type printed barcode</span>
+                </div>
+
+                <div className="manual-input-box-wrapper">
+                  <Barcode size={18} className="manual-input-icon" />
+                  <input
+                    type="text"
+                    className="manual-barcode-input"
+                    placeholder="Enter Bag Barcode (e.g. BAG-8821)"
+                    value={manualTagInput}
+                    onChange={handleManualTagChange}
+                    onKeyDown={handleManualInputKeyDown}
+                    autoFocus
+                  />
+                  {manualTagInput.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearManualInput}
+                      className="manual-clear-btn"
+                      aria-label="Clear barcode input"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <p className="manual-input-hint-row">
+                  Enter the alphanumeric tag code printed beneath the laundry bag barcode.
+                </p>
+              </div>
+            )}
 
             {/* Scanned Tag Info Box */}
             <div className="bag-association-card">
@@ -343,7 +460,7 @@ export function PickupWorkflowModal(props) {
                 <div className="pair-arrow">→</div>
                 <div className="pair-node">
                   <span className="pair-lbl">ASSIGNED BAG TAG</span>
-                  <span className="pair-val highlight-tag">{scannedBagTag}</span>
+                  <span className="pair-val highlight-tag">{displayTag}</span>
                 </div>
               </div>
             </div>
@@ -353,10 +470,11 @@ export function PickupWorkflowModal(props) {
               <button 
                 type="button" 
                 onClick={handleScanBagTag}
+                disabled={isConfirmDisabled}
                 className="driver-action-btn scan-btn"
               >
                 <Barcode size={18} />
-                <span>Confirm & Scan Tag #{scannedBagTag}</span>
+                <span>{confirmBtnText}</span>
               </button>
             </div>
           </div>
@@ -421,11 +539,6 @@ export function PickupWorkflowModal(props) {
             <p className="success-sub">
               Order <strong>{order.id}</strong> from <strong>Box #{targetBox}</strong> is safely tagged as <strong>{scannedBagTag}</strong> and loaded into Van Transit.
             </p>
-
-            <div className="customer-sync-badge">
-              <Sparkles size={16} color="#0284c7" />
-              <span>Customer tracker advanced to Stage 2 (Van Transit)</span>
-            </div>
 
             <button 
               type="button" 

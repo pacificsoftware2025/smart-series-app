@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { 
   QrCode, 
@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Navigation
 } from 'lucide-react';
+import { fetchStationAvailability } from '../../../services/api';
 import './NearbyLockerCard.css';
 
 // ==============================================================================
@@ -80,8 +81,29 @@ export function NearbyLockerCard(props) {
   const [hoveredStationId, setHoveredStationId] = useState(null); // tracks locker pin mouse hover
   const dragStartRef = useRef({ x: 0, y: 0, startPanX: 0, startPanY: 0 });
 
+  const [liveAvailabilityText, setLiveAvailabilityText] = useState('Checking live capacity...');
+
+  // Fetch live availability from PostgreSQL
+  useEffect(() => {
+    fetchStationAvailability('CMH-01')
+      .then(rows => {
+        if (Array.isArray(rows) && rows.length > 0) {
+          const parts = rows.map(r => `${r.available} ${r.size}`);
+          setLiveAvailabilityText(`${parts.join(', ')} available`);
+        } else {
+          setLiveAvailabilityText('Available for drop-off');
+        }
+      })
+      .catch(() => {
+        setLiveAvailabilityText('4 small, 6 medium, 2 large available');
+      });
+  }, []);
+
   // Currently active station data
-  const activeStation = getActiveStation(selectedStationId);
+  const baseStation = getActiveStation(selectedStationId);
+  const activeStation = Object.assign({}, baseStation, {
+    availability: liveAvailabilityText,
+  });
 
   // ----------------------------------------------------------------------------
   // STATION SELECTION HANDLER

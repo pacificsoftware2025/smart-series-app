@@ -193,7 +193,7 @@
 }
 
 .driver-viewfinder-viewport.barcode-view {
-  height: 175px;
+  height: 165px;
 }
 
 .driver-viewfinder-glass {
@@ -410,6 +410,13 @@
   box-shadow: 0 8px 22px rgba(234, 88, 12, 0.45);
 }
 
+.driver-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .driver-action-btn.next-btn {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: #ffffff;
@@ -434,6 +441,152 @@
   font-weight: 800;
   padding: 0.5rem;
   border-radius: 10px;
+}
+
+/* Option Tabs: Scan Barcode vs Manual Input */
+.bag-scan-option-pills {
+  display: flex;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.bag-option-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 9px;
+  background-color: transparent;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bag-option-tab.active {
+  background-color: #ffffff;
+  color: #ea580c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bag-option-tab:hover:not(.active) {
+  color: #0f172a;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Manual Barcode Input Card - Alternative Option */
+.manual-barcode-input-card {
+  background-color: #f8fafc;
+  border: 1.5px solid #fed7aa;
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);
+  animation: modal-fade-in 0.2s ease-out;
+  transition: all 0.15s ease;
+}
+
+.manual-barcode-input-card:focus-within {
+  border-color: #ea580c;
+  background-color: #ffffff;
+  box-shadow: 0 3px 12px rgba(234, 88, 12, 0.08);
+}
+
+.manual-input-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.manual-input-label-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manual-field-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.manual-field-hint {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.manual-input-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.manual-input-icon {
+  position: absolute;
+  left: 12px;
+  color: #ea580c;
+  pointer-events: none;
+}
+
+.manual-barcode-input {
+  width: 100%;
+  padding: 0.65rem 2.25rem 0.65rem 2.5rem;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.06em;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.manual-barcode-input:focus {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+}
+
+.manual-barcode-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: normal;
+  font-size: 0.8125rem;
+}
+
+.manual-clear-btn {
+  position: absolute;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background-color: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.manual-clear-btn:hover {
+  background-color: #cbd5e1;
+  color: #0f172a;
 }
 
 /* Step 2 Bag Association Card */

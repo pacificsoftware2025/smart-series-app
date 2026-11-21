@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Box, 
@@ -14,83 +14,55 @@ import {
   ChevronDown,
   ArrowUpRight,
   RotateCw,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { WashingBillingTab } from './intake/WashingBillingTab';
 import { LockerMonitoringTab } from './hardware/LockerMonitoringTab';
+import { fetchOrders, fetchStationCompartments } from '../../services/api';
 import './OperatorView.css';
 
-// Initial mock table orders for the Dashboard view
-const RECENT_FACILITY_ORDERS = [
-  {
-    orderId: 'ORD-8421',
-    customerName: 'Jamie Davis',
-    sourceLocker: 'Box #03 (Central Mall)',
-    serviceType: 'Wash, Dry & Fold',
-    dateText: 'Nov 11, 2026, 01:47 PM',
-    weightKg: 5.2,
-    amount: '₱337.00',
-    status: 'In Wash',
-  },
-  {
-    orderId: 'ORD-7719',
-    customerName: 'Carlos Mendoza',
-    sourceLocker: 'Box #07 (North Plaza)',
-    serviceType: 'Wash & Dry',
-    dateText: 'Nov 11, 2026, 01:12 PM',
-    weightKg: 7.4,
-    amount: '₱432.00',
-    status: 'On the Way',
-  },
-  {
-    orderId: 'ORD-6204',
-    customerName: 'Patricia Reyes',
-    sourceLocker: 'Box #11 (Greenbelt)',
-    serviceType: 'Wash Only',
-    dateText: 'Nov 11, 2026, 12:40 PM',
-    weightKg: 3.5,
-    amount: '₱140.00',
-    status: 'Pending for Pickup',
-  },
-  {
-    orderId: 'ORD-8657',
-    customerName: 'Miguel Santos',
-    sourceLocker: 'Box #02 (Central Mall)',
-    serviceType: 'Wash & Iron',
-    dateText: 'Nov 11, 2026, 12:15 PM',
-    weightKg: 4.2,
-    amount: '₱280.00',
-    status: 'Pending for Pickup',
-  },
-  {
-    orderId: 'ORD-5192',
-    customerName: 'Roberto Tan',
-    sourceLocker: 'Box #06 (Central Mall)',
-    serviceType: 'Wash, Dry & Fold',
-    dateText: 'Nov 11, 2026, 11:25 AM',
-    weightKg: 4.9,
-    amount: '₱318.50',
-    status: 'Completed',
-  },
-  {
-    orderId: 'ORD-4088',
-    customerName: 'Elena Cruz',
-    sourceLocker: 'Box #04 (North Plaza)',
-    serviceType: 'Wash & Dry',
-    dateText: 'Nov 11, 2026, 10:15 AM',
-    weightKg: 3.8,
-    amount: '₱234.00',
-    status: 'Completed',
-  },
-];
+// Helper to format ISO timestamp into readable string
+function formatOrderDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch (err) {
+    return dateStr;
+  }
+}
+
+// Maps backend order status to clean presentation label
+function formatStatusLabel(status) {
+  switch (status) {
+    case 'dropped_off':
+      return 'Pending for Pickup';
+    case 'in_transit':
+      return 'In Transit';
+    case 'in_wash':
+      return 'In Wash';
+    case 'ready_for_pickup':
+      return 'Ready for Pickup';
+    case 'completed':
+      return 'Completed';
+    default:
+      return status ? status.replace(/_/g, ' ') : 'Pending';
+  }
+}
 
 // ==============================================================================
 // REACT COMPONENT: OperatorView
-// Modern desktop SaaS workstation layout with left navigation sidebar,
-// 4-column top metrics strip, and dedicated views:
-// 1. Dashboard (Overview KPI cards + Recent Orders Table)
-// 2. Washing & Billing (Scale Weighing, Pricing Calculator)
-// 3. Locker Monitoring (15-Box Hardware Telemetry Grid)
+// Modern enterprise SaaS workstation connected live to PostgreSQL:
+// 1. Dashboard (Live cloud KPI cards + Real Orders Table)
+// 2. Washing & Billing (Scale Weighing, Live Database Update)
+// 3. Locker Monitoring (16-Box Live Hardware Telemetry Grid)
 // ==============================================================================
 export function OperatorView() {
   const auth = useAuth();
@@ -101,35 +73,61 @@ export function OperatorView() {
   // Active view: 'dashboard' | 'washing' | 'lockers'
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
-  const [tableFilter, setTableFilter] = useState('all'); // 'all' | 'pending_pickup' | 'in_facility' | 'completed'
+  const [tableFilter, setTableFilter] = useState('all'); // 'all' | 'pending_pickup' | 'in_wash' | 'completed'
 
-  // Metric values
-  const [activeOrdersCount, setActiveOrdersCount] = useState(8);
-  const [inTransitCount, setInTransitCount] = useState(4);
-  const [inWashCount, setInWashCount] = useState(4);
-  const [occupiedLockers, setOccupiedLockers] = useState(3);
-  const [totalLockers, setTotalLockers] = useState(15);
-  const [todaysRevenue, setTodaysRevenue] = useState(4250.00);
-  const [processedCount, setProcessedCount] = useState(14);
+  // Live state from API
+  const [ordersList, setOrdersList] = useState([]);
+  const [compartmentsList, setCompartmentsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Dynamic order counts for table tabs
-  // Vanilla JS comparison: Simple for-loop counting matching items in the array
+  // Poll live orders and telemetry
+  const loadDashboardData = useCallback(async function () {
+    try {
+      const [orders, comps] = await Promise.all([
+        fetchOrders(),
+        fetchStationCompartments('CMH-01'),
+      ]);
+
+      if (Array.isArray(orders)) {
+        setOrdersList(orders);
+      }
+      if (Array.isArray(comps)) {
+        setCompartmentsList(comps);
+      }
+    } catch (err) {
+      console.warn('[OperatorView] Error syncing dashboard data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+    const interval = setInterval(loadDashboardData, 5000);
+    return () => clearInterval(interval);
+  }, [loadDashboardData]);
+
+  // Dynamic order counts from live database
   let pendingPickupCount = 0;
-  let inWashOrdersCount = 0;
+  let inTransitCount = 0;
+  let inWashCount = 0;
   let completedCount = 0;
+  let totalRevenue = 0;
 
-  for (let i = 0; i < RECENT_FACILITY_ORDERS.length; i++) {
-    const orderItem = RECENT_FACILITY_ORDERS[i];
-    if (orderItem.status === 'Pending for Pickup') {
-      pendingPickupCount = pendingPickupCount + 1;
-    }
-    if (orderItem.status === 'In Wash' || orderItem.status === 'Pending Wash' || orderItem.status === 'Pending') {
-      inWashOrdersCount = inWashOrdersCount + 1;
-    }
-    if (orderItem.status === 'Completed') {
-      completedCount = completedCount + 1;
+  for (let i = 0; i < ordersList.length; i++) {
+    const o = ordersList[i];
+    if (o.status === 'dropped_off') pendingPickupCount++;
+    if (o.status === 'in_transit') inTransitCount++;
+    if (o.status === 'in_wash') inWashCount++;
+    if (o.status === 'completed') completedCount++;
+    if (o.amount) {
+      totalRevenue += parseFloat(o.amount) || 0;
     }
   }
+
+  const activeOrdersCount = ordersList.filter(o => o.status !== 'completed').length;
+  const totalLockers = compartmentsList.length || 16;
+  const occupiedLockers = compartmentsList.filter(c => c.status === 'occupied').length;
 
   // Helper functions: replaces ternary operators with readable if/else blocks
   function getNavLinkClass(navId) {
@@ -147,16 +145,19 @@ export function OperatorView() {
   }
 
   function getStatusBadgeClass(status) {
-    if (status === 'In Wash') {
+    if (status === 'in_wash') {
       return 'order-status-badge badge-purple';
     }
-    if (status === 'On the Way' || status === 'In Transit') {
+    if (status === 'in_transit') {
       return 'order-status-badge badge-blue';
     }
-    if (status === 'Pending for Pickup' || status === 'Pending' || status === 'Pending Wash') {
+    if (status === 'dropped_off') {
       return 'order-status-badge badge-amber';
     }
-    if (status === 'Completed') {
+    if (status === 'ready_for_pickup') {
+      return 'order-status-badge badge-orange';
+    }
+    if (status === 'completed') {
       return 'order-status-badge badge-green';
     }
     return 'order-status-badge badge-gray';
@@ -168,62 +169,42 @@ export function OperatorView() {
     operatorName = user.name;
   }
 
-  let stationName = 'Central Hub (Station #01)';
+  let stationName = 'Central Mall Hub (Bay CMH-01)';
   if (user && user.station) {
     stationName = user.station;
   }
 
   // Callback when a bag is confirmed and started washing
   function handleStatusChange(orderId, newStatus, extraData) {
-    setInWashCount(function (prev) {
-      return prev + 1;
-    });
-
-    if (extraData && extraData.finalAmountDue) {
-      setTodaysRevenue(function (prev) {
-        return prev + extraData.finalAmountDue;
-      });
-    }
-
+    loadDashboardData();
     if (updateOrderStatus) {
       updateOrderStatus(orderId, newStatus, extraData);
     }
   }
 
-  const availableLockers = totalLockers - occupiedLockers;
-
-  // Filter recent orders
-  // Vanilla JS comparison: Array.filter returns a new array with items that match our conditions
-  const filteredOrders = RECENT_FACILITY_ORDERS.filter(function (order) {
+  // Filter recent orders based on search & tab
+  const filteredOrders = ordersList.filter(function (order) {
     if (searchQuery && searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
-      const matchId = order.orderId.toLowerCase().indexOf(q) !== -1;
-      const matchCust = order.customerName.toLowerCase().indexOf(q) !== -1;
-      const matchLocker = order.sourceLocker.toLowerCase().indexOf(q) !== -1;
-      if (!matchId && !matchCust && !matchLocker) {
+      const matchId = order.id ? order.id.toLowerCase().indexOf(q) !== -1 : false;
+      const matchCust = order.customer_name ? order.customer_name.toLowerCase().indexOf(q) !== -1 : false;
+      const boxStr = String(order.dropoff_box_number || order.compartment_number || '');
+      const matchBox = boxStr.indexOf(q) !== -1;
+      if (!matchId && !matchCust && !matchBox) {
         return false;
       }
     }
 
     if (tableFilter === 'pending_pickup') {
-      if (order.status === 'Pending for Pickup') {
-        return true;
-      }
-      return false;
+      return order.status === 'dropped_off';
     }
 
-    if (tableFilter === 'in_facility' || tableFilter === 'in_wash') {
-      if (order.status === 'In Wash' || order.status === 'Pending Wash' || order.status === 'Pending') {
-        return true;
-      }
-      return false;
+    if (tableFilter === 'in_wash') {
+      return order.status === 'in_wash';
     }
 
     if (tableFilter === 'completed') {
-      if (order.status === 'Completed') {
-        return true;
-      }
-      return false;
+      return order.status === 'completed';
     }
 
     return true;
@@ -233,7 +214,7 @@ export function OperatorView() {
     <div className="operator-saas-layout">
       
       {/* --------------------------------------------------------------- */}
-      {/* LEFT SIDEBAR NAVIGATION (Matching Reference Design)             */}
+      {/* LEFT SIDEBAR NAVIGATION                                         */}
       {/* --------------------------------------------------------------- */}
       <aside className="operator-left-sidebar">
         
@@ -251,7 +232,7 @@ export function OperatorView() {
           </div>
         </div>
 
-        {/* Quick Search Field with Shortcut Indicator */}
+        {/* Quick Search Field */}
         <div className="sidebar-search-box">
           <Search size={14} className="sidebar-search-icon" />
           <input
@@ -283,7 +264,7 @@ export function OperatorView() {
           >
             <RotateCw size={16} />
             <span>Washing & Billing</span>
-            <span className="sidebar-item-pill">New</span>
+            {inWashCount > 0 && <span className="sidebar-item-pill">{inWashCount}</span>}
           </button>
 
           <button
@@ -293,7 +274,7 @@ export function OperatorView() {
           >
             <Box size={16} />
             <span>Locker Monitoring</span>
-            <span className="sidebar-item-pill pill-gray">15</span>
+            <span className="sidebar-item-pill pill-gray">{totalLockers}</span>
           </button>
 
         </nav>
@@ -317,7 +298,7 @@ export function OperatorView() {
       </aside>
 
       {/* --------------------------------------------------------------- */}
-      {/* RIGHT MAIN CONTENT CANVAS (Clean White & Slate Layout)          */}
+      {/* RIGHT MAIN CONTENT CANVAS                                       */}
       {/* --------------------------------------------------------------- */}
       <main className="operator-main-canvas">
         
@@ -330,7 +311,7 @@ export function OperatorView() {
             <div className="canvas-title-group">
               <h2 className="canvas-station-title">{stationName}</h2>
               <span className="canvas-telemetry-status">
-                <span className="canvas-live-dot"></span> System Online
+                <span className="canvas-live-dot"></span> PostgreSQL Live
               </span>
             </div>
           </div>
@@ -348,16 +329,14 @@ export function OperatorView() {
         </header>
 
         {/* ------------------------------------------------------------- */}
-        {/* TOP METRICS SUMMARY STRIP (Matches Reference 4-Metric Card)    */}
-        {/* Total Sales | Total Spend | Paid out | Returns                */}
-        {/* Adapted to: Total Revenue | Active Orders | Locker Occupancy | Completed */}
+        {/* TOP METRICS SUMMARY STRIP (Live Database Calculations)        */}
         {/* ------------------------------------------------------------- */}
         <section className="top-metrics-card-strip">
           
           <div className="metric-strip-item">
             <span className="metric-strip-label">Total Revenue</span>
             <div className="metric-strip-value">
-              ₱{todaysRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₱{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
 
@@ -376,9 +355,9 @@ export function OperatorView() {
           </div>
 
           <div className="metric-strip-item item-last">
-            <span className="metric-strip-label">Completed Today</span>
+            <span className="metric-strip-label">Completed Orders</span>
             <div className="metric-strip-value">
-              {processedCount}
+              {completedCount}
             </div>
           </div>
 
@@ -388,7 +367,7 @@ export function OperatorView() {
         {/* CONDITIONAL MAIN CONTENT BASED ON SELECTED SIDEBAR NAVIGATION */}
         {/* ------------------------------------------------------------- */}
 
-        {/* VIEW 1: DASHBOARD OVERVIEW (Metric Cards & Recent Orders Table) */}
+        {/* VIEW 1: DASHBOARD OVERVIEW (Metric Cards & Live Orders Table) */}
         {activeNav === 'dashboard' && (
           <div className="dashboard-view-content">
             
@@ -397,7 +376,7 @@ export function OperatorView() {
               <div>
                 <h3 className="section-main-heading">Operations</h3>
                 <p className="section-sub-heading">
-                  Real-time status of lockers, washing machines, and pending bags.
+                  Real-time status of lockers, washing lines, and van transit from PostgreSQL.
                 </p>
               </div>
             </div>
@@ -405,7 +384,7 @@ export function OperatorView() {
             {/* 3 Department Cards: LOCKER STATUS | ACTIVE CYCLE | DELIVERIES */}
             <div className="metrics-triad-grid">
               
-              {/* Card 1: Smart Locker Fleet (LOCKER STATUS) */}
+              {/* Card 1: Smart Locker Fleet */}
               <div 
                 className="triad-card"
                 onClick={function () { setActiveNav('lockers'); }}
@@ -422,7 +401,7 @@ export function OperatorView() {
                 <div className="triad-main-number">{occupiedLockers} Occupied</div>
               </div>
 
-              {/* Card 2: Washing Lines (ACTIVE CYCLE) */}
+              {/* Card 2: Washing Lines */}
               <div 
                 className="triad-card"
                 onClick={function () { setActiveNav('washing'); }}
@@ -439,7 +418,7 @@ export function OperatorView() {
                 <div className="triad-main-number">{inWashCount} Bags</div>
               </div>
 
-              {/* Card 3: Route Transit (DELIVERIES) */}
+              {/* Card 3: Route Transit */}
               <div className="triad-card">
                 <div className="triad-card-top">
                   <div className="triad-badge badge-blue">
@@ -449,12 +428,12 @@ export function OperatorView() {
                   <ArrowUpRight size={15} className="triad-arrow" />
                 </div>
                 <span className="triad-metric-label">DELIVERIES</span>
-                <div className="triad-main-number">{inTransitCount} On the Way</div>
+                <div className="triad-main-number">{inTransitCount} In Transit</div>
               </div>
 
             </div>
 
-            {/* Bottom Data Table Section (Matches Reference Table Style) */}
+            {/* Bottom Data Table Section */}
             <div className="orders-table-card">
               
               {/* Table Subtabs */}
@@ -465,7 +444,7 @@ export function OperatorView() {
                     onClick={function () { setTableFilter('all'); }}
                     className={getTableFilterClass('all')}
                   >
-                    <span>All Orders ({RECENT_FACILITY_ORDERS.length})</span>
+                    <span>All Orders ({ordersList.length})</span>
                   </button>
                   <button
                     type="button"
@@ -479,7 +458,7 @@ export function OperatorView() {
                     onClick={function () { setTableFilter('in_wash'); }}
                     className={getTableFilterClass('in_wash')}
                   >
-                    <span>In Wash ({inWashOrdersCount})</span>
+                    <span>In Wash ({inWashCount})</span>
                   </button>
                   <button
                     type="button"
@@ -493,41 +472,61 @@ export function OperatorView() {
 
               {/* Data Table */}
               <div className="table-responsive-wrapper">
-                <table className="facility-data-table">
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Customer</th>
-                      <th>Locker / Station</th>
-                      <th>Service Package</th>
-                      <th>Date / Time</th>
-                      <th>Weight</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.map(function (order) {
-                      return (
-                        <tr key={order.orderId}>
-                          <td className="cell-order-code">{order.orderId}</td>
-                          <td className="cell-customer-name">{order.customerName}</td>
-                          <td className="cell-station">{order.sourceLocker}</td>
-                          <td className="cell-service">{order.serviceType}</td>
-                          <td className="cell-date">{order.dateText}</td>
-                          <td className="cell-weight">{order.weightKg} kg</td>
-                          <td className="cell-amount">{order.amount}</td>
-                          <td>
-                            <span className={getStatusBadgeClass(order.status)}>
-                              <span className="badge-dot"></span>
-                              <span>{order.status}</span>
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {isLoading && (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <Loader2 size={16} className="relay-spinner" />
+                    <span>Loading live orders from database...</span>
+                  </div>
+                )}
+
+                {!isLoading && filteredOrders.length === 0 && (
+                  <div style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b' }}>
+                    <p style={{ fontWeight: 600, color: '#0f172a' }}>No orders found</p>
+                    <p style={{ fontSize: '0.8125rem' }}>No orders currently match the selected view.</p>
+                  </div>
+                )}
+
+                {!isLoading && filteredOrders.length > 0 && (
+                  <table className="facility-data-table">
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Locker / Station</th>
+                        <th>Service Package</th>
+                        <th>Date / Time</th>
+                        <th>Weight</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredOrders.map(function (order) {
+                        const boxNum = order.dropoff_box_number || order.compartment_number || '—';
+                        const weightDisplay = order.weight_kg ? `${order.weight_kg} kg` : 'Pending';
+                        const amountDisplay = order.amount ? `₱${parseFloat(order.amount).toFixed(2)}` : 'Pending';
+
+                        return (
+                          <tr key={order.id}>
+                            <td className="cell-order-code">{order.id}</td>
+                            <td className="cell-customer-name">{order.customer_name || 'Customer'}</td>
+                            <td className="cell-station">Box #{boxNum} ({order.station_id || 'CMH-01'})</td>
+                            <td className="cell-service">{order.service_tier || 'Wash, Dry & Fold'}</td>
+                            <td className="cell-date">{formatOrderDate(order.created_at)}</td>
+                            <td className="cell-weight">{weightDisplay}</td>
+                            <td className="cell-amount">{amountDisplay}</td>
+                            <td>
+                              <span className={getStatusBadgeClass(order.status)}>
+                                <span className="badge-dot"></span>
+                                <span>{formatStatusLabel(order.status)}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
 
             </div>
