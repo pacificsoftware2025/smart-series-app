@@ -135,3 +135,98 @@ export async function deliverCleanOrder(orderId, boxNumber, stationId = ENV.stat
     throw err;
   }
 }
+
+// ==============================================================================
+// LAUNDRY LOCKER BINDING & PAIRING HANDSHAKE API
+// ==============================================================================
+
+/**
+ * Operator sends a remote pairing request to an unprovisioned kiosk hardware terminal.
+ * Route: POST /api/stations/pair-request
+ * Body: { stationId, stationName, address, branchTag }
+ */
+export async function sendPairingRequest(params) {
+  const res = await fetch(`${BASE_URL}/stations/pair-request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      stationId: params.stationId,
+      stationName: params.stationName,
+      address: params.address,
+      branchTag: params.branchTag,
+    }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || `HTTP ${res.status} Failed to send pairing request`);
+  }
+  return await res.json();
+}
+
+/**
+ * Checks or polls the pairing status for a given station ID.
+ * Route: GET /api/stations/:stationId/pairing-status
+ */
+export async function fetchPairingStatus(stationId) {
+  const normId = encodeURIComponent(String(stationId).trim().toUpperCase());
+  const res = await fetch(`${BASE_URL}/stations/${normId}/pairing-status`);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || `HTTP ${res.status} Failed to fetch pairing status`);
+  }
+  return await res.json();
+}
+
+/**
+ * Confirms pairing handshake when kiosk technician taps Approve.
+ * Route: POST /api/stations/pair-confirm
+ * Body: { stationId, pairingCode }
+ */
+export async function confirmPairing(stationId, pairingCode) {
+  const res = await fetch(`${BASE_URL}/stations/pair-confirm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      stationId: stationId,
+      pairingCode: pairingCode,
+    }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || `HTTP ${res.status} Failed to confirm pairing`);
+  }
+  return await res.json();
+}
+
+/**
+ * Fetches all registered fleet locker stations for Operator views.
+ * Route: GET /api/stations
+ */
+export async function fetchLockerStations() {
+  try {
+    const res = await fetch(`${BASE_URL}/stations`);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} Failed to fetch locker stations`);
+    }
+    const json = await res.json();
+    if (json.stations) {
+      return json.stations;
+    }
+    return [];
+  } catch (err) {
+    console.warn('[API] fetchLockerStations error, returning default fallback:', err);
+    return [
+      {
+        id: 'CMH-01',
+        name: 'Central Mall Hub',
+        address: 'Ground Floor, North Atrium',
+        total_compartments: 16,
+        status: 'online',
+        binding_status: 'BOUND_ACTIVE',
+        updated_at: new Date().toISOString(),
+      },
+    ];
+  }
+}

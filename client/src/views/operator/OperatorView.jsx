@@ -15,10 +15,12 @@ import {
   ArrowUpRight,
   RotateCw,
   Plus,
-  Loader2
+  Loader2,
+  Link2
 } from 'lucide-react';
 import { WashingBillingTab } from './intake/WashingBillingTab';
 import { LockerMonitoringTab } from './hardware/LockerMonitoringTab';
+import { LaundryLockerBindingTab } from './binding/LaundryLockerBindingTab';
 import { fetchOrders, fetchStationCompartments } from '../../services/api';
 import './OperatorView.css';
 
@@ -275,6 +277,15 @@ export function OperatorView() {
             <Box size={16} />
             <span>Locker Monitoring</span>
             <span className="sidebar-item-pill pill-gray">{totalLockers}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={function () { setActiveNav('binding'); }}
+            className={getNavLinkClass('binding')}
+          >
+            <Link2 size={16} />
+            <span>Laundry Locker Binding</span>
           </button>
 
         </nav>
@@ -542,6 +553,15 @@ export function OperatorView() {
         {/* VIEW 3: LOCKER MONITORING HARDWARE GRID */}
         {activeNav === 'lockers' && (
           <LockerMonitoringTab />
+        )}
+
+        {/* VIEW 4: LAUNDRY LOCKER BINDING & PROVISIONING */}
+        {activeNav === 'binding' && (
+          <LaundryLockerBindingTab 
+            onNavigateToMonitoring={function (targetStationId) {
+              setActiveNav('lockers');
+            }}
+          />
         )}
 
       </main>

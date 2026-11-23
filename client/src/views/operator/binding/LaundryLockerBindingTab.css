@@ -1,0 +1,369 @@
+.binding-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.binding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.binding-header-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  margin: 0;
+}
+
+.binding-header-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.binding-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .binding-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CARDS */
+.binding-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.binding-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* FORM FIELDS */
+.binding-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.binding-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: 0.2px;
+}
+
+.binding-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.binding-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.binding-input:focus {
+  border-color: #ea580c;
+}
+
+.binding-input-disabled {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.binding-btn-secondary {
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.binding-btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.binding-btn-primary {
+  padding: 12px 20px;
+  background: #ea580c;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+}
+
+.binding-btn-primary:hover:not(:disabled) {
+  background: #c2410c;
+}
+
+.binding-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* HARDWARE TELEMETRY PREVIEW */
+.binding-preview-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.binding-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.binding-preview-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.binding-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.binding-badge-amber {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.binding-badge-emerald {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.binding-badge-sky {
+  background: #f0f9ff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+}
+
+.binding-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.binding-telemetry-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.binding-telemetry-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.binding-telemetry-val {
+  font-size: 12.5px;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+/* STATUS BANNERS */
+.binding-pending-banner {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.binding-pending-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.binding-pending-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #92400e;
+  margin: 0;
+}
+
+.binding-pending-text {
+  font-size: 12px;
+  color: #b45309;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.binding-success-banner {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.binding-success-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #166534;
+  margin: 0;
+}
+
+.binding-success-text {
+  font-size: 12px;
+  color: #15803d;
+  margin: 0;
+}
+
+/* FLEET DIRECTORY */
+.fleet-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fleet-search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+}
+
+.fleet-search-input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  outline: none;
+}
+
+.fleet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.fleet-station-card {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.fleet-station-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.fleet-station-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fleet-station-code {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fleet-station-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.fleet-station-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  padding-top: 4px;
+  border-top: 1px dashed #f1f5f9;
+}
+
+.fleet-link-btn {
+  background: none;
+  border: none;
+  color: #ea580c;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fleet-link-btn:hover {
+  text-decoration: underline;
+}
