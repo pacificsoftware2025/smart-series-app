@@ -47,7 +47,7 @@ function capitalizeSize(size) {
 // - Live occupancy, available counts, and door security monitoring
 // - Remote door pop & relock controls for operator maintenance
 // ==============================================================================
-export function LockerMonitoringTab() {
+export function LockerMonitoringTab({ stationId = 'SLL-31690', totalDoors }) {
   const [lockersList, setLockersList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -61,8 +61,8 @@ export function LockerMonitoringTab() {
   // Load live telemetry from cloud backend
   const loadTelemetry = useCallback(async function (isManual = false) {
     try {
-      const data = await fetchStationCompartments('CMH-01');
-      if (Array.isArray(data) && data.length > 0) {
+      const data = await fetchStationCompartments(stationId);
+      if (Array.isArray(data)) {
         setLockersList(function (prev) {
           return data.map(function (c) {
             const boxNum = String(c.box_number).padStart(2, '0');
@@ -95,7 +95,7 @@ export function LockerMonitoringTab() {
     } finally {
       setIsLoading(false);
     }
-  }, [doorOverrides]);
+  }, [doorOverrides, stationId]);
 
   // Initial load and 5-second polling interval
   useEffect(() => {
@@ -104,7 +104,7 @@ export function LockerMonitoringTab() {
       loadTelemetry();
     }, 5000);
     return () => clearInterval(interval);
-  }, [loadTelemetry]);
+  }, [loadTelemetry, stationId]);
 
   // Helper functions: replaces ternary operators with readable if/else blocks
   function getFilterBtnClass(filterName) {
@@ -186,7 +186,7 @@ export function LockerMonitoringTab() {
     }
   }
 
-  const totalLockers = lockersList.length || 16;
+  const totalLockers = lockersList.length || totalDoors || 4;
   const occupancyPercent = totalLockers > 0 ? Math.round((occupiedCount / totalLockers) * 100) : 0;
 
   // Remote Door Unlock Trigger (operator assistance)
@@ -340,7 +340,7 @@ export function LockerMonitoringTab() {
       {isLoading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', gap: '0.75rem', color: '#64748b' }}>
           <Loader2 size={20} className="relay-spinner" />
-          <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Syncing hardware telemetry from Central Mall Hub (Bay CMH-01)...</span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Syncing hardware telemetry from {stationId}...</span>
         </div>
       )}
 
@@ -520,7 +520,7 @@ export function LockerMonitoringTab() {
 
                 <div className="inspector-col">
                   <span className="col-label">LOCATION HUB</span>
-                  <span className="col-value">Central Mall Hub (Bay CMH-01)</span>
+                  <span className="col-value">{stationId || 'Smart Locker Terminal'}</span>
                 </div>
               </div>
 

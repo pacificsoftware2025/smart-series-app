@@ -21,7 +21,7 @@ import {
 import { WashingBillingTab } from './intake/WashingBillingTab';
 import { LockerMonitoringTab } from './hardware/LockerMonitoringTab';
 import { LaundryLockerBindingTab } from './binding/LaundryLockerBindingTab';
-import { fetchOrders, fetchStationCompartments } from '../../services/api';
+import { fetchOrders, fetchStationCompartments, fetchLockerStations } from '../../services/api';
 import './OperatorView.css';
 
 // Helper to format ISO timestamp into readable string
@@ -80,28 +80,47 @@ export function OperatorView() {
   // Live state from API
   const [ordersList, setOrdersList] = useState([]);
   const [compartmentsList, setCompartmentsList] = useState([]);
+  const [fleetStations, setFleetStations] = useState([]);
+  const [activeStationId, setActiveStationId] = useState(function () {
+    if (user && user.lockerStationId) return user.lockerStationId;
+    return '';
+  });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Poll live orders and telemetry
+  // Poll live orders, compartments for the active station, and fleet list
   const loadDashboardData = useCallback(async function () {
     try {
-      const [orders, comps] = await Promise.all([
+      const [orders, stations] = await Promise.all([
         fetchOrders(),
-        fetchStationCompartments('CMH-01'),
+        fetchLockerStations(),
       ]);
 
       if (Array.isArray(orders)) {
         setOrdersList(orders);
       }
-      if (Array.isArray(comps)) {
-        setCompartmentsList(comps);
+
+      let stationToQuery = activeStationId;
+      if (Array.isArray(stations) && stations.length > 0) {
+        setFleetStations(stations);
+        const exists = stations.some(s => s.id === activeStationId);
+        if (!exists) {
+          stationToQuery = stations[0].id;
+          setActiveStationId(stationToQuery);
+        }
+      }
+
+      if (stationToQuery) {
+        const comps = await fetchStationCompartments(stationToQuery);
+        if (Array.isArray(comps)) {
+          setCompartmentsList(comps);
+        }
       }
     } catch (err) {
       console.warn('[OperatorView] Error syncing dashboard data:', err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeStationId]);
 
   useEffect(() => {
     loadDashboardData();
@@ -127,8 +146,12 @@ export function OperatorView() {
     }
   }
 
+  // Active station resolution & dynamic capacity
+  const currentStation = fleetStations.find(s => s.id === activeStationId) || fleetStations[0];
   const activeOrdersCount = ordersList.filter(o => o.status !== 'completed').length;
-  const totalLockers = compartmentsList.length || 16;
+  const totalLockers = (currentStation && currentStation.total_compartments)
+    ? Number(currentStation.total_compartments)
+    : (compartmentsList.length || 4);
   const occupiedLockers = compartmentsList.filter(c => c.status === 'occupied').length;
 
   // Helper functions: replaces ternary operators with readable if/else blocks
@@ -320,7 +343,26 @@ export function OperatorView() {
               <Building2 size={18} color="#ea580c" />
             </div>
             <div className="canvas-title-group">
-              <h2 className="canvas-station-title">{stationName}</h2>
+              <div className="canvas-station-select-wrapper">
+                <select
+                  value={activeStationId}
+                  onChange={function (e) { setActiveStationId(e.target.value); }}
+                  className="canvas-station-dropdown"
+                  aria-label="Select Station"
+                >
+                  {fleetStations.map(function (st) {
+                    return (
+                      <option key={st.id} value={st.id}>
+                        {st.name || st.id} ({st.id}) — {st.total_compartments || 16} Doors
+                      </option>
+                    );
+                  })}
+                  {fleetStations.length === 0 && (
+                    <option value={activeStationId}>{stationName}</option>
+                  )}
+                </select>
+                <ChevronDown size={14} className="canvas-station-dropdown-icon" />
+              </div>
               <span className="canvas-telemetry-status">
                 <span className="canvas-live-dot"></span> PostgreSQL Live
               </span>
@@ -552,13 +594,19 @@ export function OperatorView() {
 
         {/* VIEW 3: LOCKER MONITORING HARDWARE GRID */}
         {activeNav === 'lockers' && (
-          <LockerMonitoringTab />
+          <LockerMonitoringTab 
+            stationId={activeStationId || (fleetStations[0] && fleetStations[0].id) || 'SLL-31690'} 
+            totalDoors={totalLockers}
+          />
         )}
 
         {/* VIEW 4: LAUNDRY LOCKER BINDING & PROVISIONING */}
         {activeNav === 'binding' && (
           <LaundryLockerBindingTab 
             onNavigateToMonitoring={function (targetStationId) {
+              if (targetStationId) {
+                setActiveStationId(targetStationId);
+              }
               setActiveNav('lockers');
             }}
           />

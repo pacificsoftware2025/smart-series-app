@@ -15,6 +15,7 @@ import {
 import {
   sendPairingRequest,
   fetchPairingStatus,
+  fetchStationCompartments,
   fetchLockerStations
 } from '../../../services/api';
 import './LaundryLockerBindingTab.css';
@@ -81,11 +82,29 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
     };
   }, []);
 
+  // Helper: Validates Machine / Hardware Locker ID format
+  function validateMachineId(id) {
+    if (!id || !id.trim()) {
+      return 'Please enter a Machine ID (e.g. SLL-12901 or CMH-01).';
+    }
+    const clean = id.trim();
+    if (clean.includes('@') || clean.includes(' ') || clean.includes('.')) {
+      return 'Invalid Machine ID format. Must be an alphanumeric hardware code (e.g. SLL-12901 or CMH-01), not an email address or sentence.';
+    }
+    const regex = /^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/;
+    if (!regex.test(clean) || clean.length < 3 || clean.length > 25) {
+      return 'Invalid Machine ID format. Must contain 3-25 alphanumeric characters and hyphens only (e.g. SLL-12901, CMH-01).';
+    }
+    return null;
+  }
+
   // 2. Query/Inspect Station Telemetry
   async function handleInspectStation() {
     const cleanId = stationIdInput.trim().toUpperCase();
-    if (!cleanId) {
-      setInspectError('Please enter a Machine ID (e.g. SLL-12901).');
+    const formatError = validateMachineId(cleanId);
+    if (formatError) {
+      setInspectError(formatError);
+      setInspectedStation(null);
       return;
     }
 
@@ -94,19 +113,35 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
     setPairingState('IDLE');
 
     try {
-      const statusRes = await fetchPairingStatus(cleanId);
+      const [statusRes, comps] = await Promise.all([
+        fetchPairingStatus(cleanId),
+        fetchStationCompartments(cleanId),
+      ]);
+      
+      // Strict Verification: If terminal does not exist in the database, reject
+      if (statusRes.exists === false || statusRes.bindingStatus === 'UNREGISTERED') {
+        setInspectedStation(null);
+        setInspectError(`Machine ID "${cleanId}" was not found in the fleet. Please ensure the physical kiosk is powered on and configured with this ID.`);
+        return;
+      }
+
+      // Real physical door count from database compartments table
+      const realDoors = (Array.isArray(comps) && comps.length > 0)
+        ? comps.length
+        : (Number(statusRes.total_compartments) || Number(statusRes.totalDoors) || 16);
+
       setInspectedStation({
         stationId: cleanId,
-        bindingStatus: statusRes.bindingStatus || 'UNBOUND',
-        stationName: statusRes.stationName || `Station ${cleanId}`,
+        bindingStatus: statusRes.bindingStatus || statusRes.binding_status || 'UNBOUND',
+        stationName: statusRes.stationName || statusRes.name || `Station ${cleanId}`,
         address: statusRes.address || 'Pending Provisioning',
-        totalDoors: 16,
+        totalDoors: realDoors,
         motherboardPort: '/dev/ttyS3 (9600 Baud)',
         firmware: 'SmartLocker Android Kiosk v1.0',
       });
 
-      if (statusRes.stationName) {
-        setStationName(statusRes.stationName);
+      if (statusRes.stationName || statusRes.name) {
+        setStationName(statusRes.stationName || statusRes.name);
       } else {
         setStationName(`Locker Depot ${cleanId}`);
       }
@@ -115,18 +150,8 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
         setAddress(statusRes.address);
       }
     } catch (err) {
-      // If station is completely fresh/unregistered, provide default unprovisioned specs
-      setInspectedStation({
-        stationId: cleanId,
-        bindingStatus: 'UNBOUND',
-        stationName: `Locker Depot ${cleanId}`,
-        address: 'Level 1 Main Entrance',
-        totalDoors: 16,
-        motherboardPort: '/dev/ttyS3 (9600 Baud)',
-        firmware: 'SmartLocker Android Kiosk v1.0',
-      });
-      setStationName(`Locker Depot ${cleanId}`);
-      setAddress('Level 1 Main Entrance');
+      setInspectedStation(null);
+      setInspectError(err.message || `Failed to verify hardware terminal "${cleanId}".`);
     } finally {
       setIsInspecting(false);
     }
@@ -134,15 +159,28 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
 
   // 3. Initiate Remote Pairing Handshake
   async function handleInitiateBinding() {
-    const cleanId = (inspectedStation ? inspectedStation.stationId : stationIdInput).trim().toUpperCase();
-    if (!cleanId) {
-      setPairingError('Machine ID is required.');
+    let cleanId = stationIdInput.trim().toUpperCase();
+    if (inspectedStation && inspectedStation.stationId) {
+      cleanId = inspectedStation.stationId.trim().toUpperCase();
+    }
+    const formatError = validateMachineId(cleanId);
+    if (formatError) {
+      setPairingError(formatError);
       return;
     }
 
-    if (!stationName.trim()) {
-      setPairingError('Please provide a Station Display Name.');
-      return;
+    let nameToUse = 'Station ' + cleanId;
+    if (inspectedStation && inspectedStation.stationName) {
+      nameToUse = inspectedStation.stationName;
+    } else if (stationName && stationName.trim()) {
+      nameToUse = stationName.trim();
+    }
+
+    let addressToUse = 'Level 1 Main Entrance';
+    if (inspectedStation && inspectedStation.address) {
+      addressToUse = inspectedStation.address;
+    } else if (address && address.trim()) {
+      addressToUse = address.trim();
     }
 
     setIsSendingRequest(true);
@@ -151,8 +189,8 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
     try {
       const res = await sendPairingRequest({
         stationId: cleanId,
-        stationName: stationName.trim(),
-        address: address.trim() || 'Level 1 Main Entrance',
+        stationName: nameToUse,
+        address: addressToUse,
         branchTag: branchTag,
       });
 
@@ -245,9 +283,9 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
             <span>Hardware Terminal Pairing Workbench</span>
           </h3>
 
-          {/* STEP 1: Machine ID Lookup */}
+          {/* Machine ID Lookup */}
           <div className="binding-form-group">
-            <label className="binding-label">Step 1: Machine / Hardware Locker ID</label>
+            <label className="binding-label">Machine / Hardware Locker ID</label>
             <div className="binding-input-row">
               <input
                 type="text"
@@ -279,7 +317,7 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
             )}
           </div>
 
-          {/* STEP 2: Live Hardware Telemetry Preview Card */}
+          {/* Live Hardware Telemetry Preview Card */}
           {inspectedStation && (
             <div className="binding-preview-card">
               <div className="binding-preview-header">
@@ -317,43 +355,6 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
               </div>
             </div>
           )}
-
-          {/* STEP 3: Branch Location & Display Name */}
-          <div className="binding-form-group">
-            <label className="binding-label">Step 2: Station Display Name</label>
-            <input
-              type="text"
-              value={stationName}
-              onChange={(e) => setStationName(e.target.value)}
-              placeholder="e.g. Pasay Branch - Ground Floor Laundry Depot"
-              className="binding-input"
-            />
-          </div>
-
-          <div className="binding-form-group">
-            <label className="binding-label">Step 3: Physical Address / Location Details</label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="e.g. Level 1 Main Entrance, EDSA Wing"
-              className="binding-input"
-            />
-          </div>
-
-          <div className="binding-form-group">
-            <label className="binding-label">Step 4: Branch Assignment Cluster</label>
-            <select
-              value={branchTag}
-              onChange={(e) => setBranchTag(e.target.value)}
-              className="binding-input"
-            >
-              <option value="Pasay Metro">Pasay Metro Cluster</option>
-              <option value="Malabon Facility">Malabon Facility Hub</option>
-              <option value="Makati Central">Makati Central Hub</option>
-              <option value="Quezon City North">Quezon City North Cluster</option>
-            </select>
-          </div>
 
           {/* STEP 4: Action Button & Pairing Banner */}
           {pairingState === 'PENDING' ? (

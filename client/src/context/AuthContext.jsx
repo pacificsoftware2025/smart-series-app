@@ -1,6 +1,11 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ROLES } from '../constants/roles';
-import { createDropoffOrder } from '../services/api';
+import { 
+  createDropoffOrder, 
+  loginOperator, 
+  registerOperator, 
+  fetchCurrentOperatorProfile 
+} from '../services/api';
 
 // ==============================================================================
 // REACT CONTEXT explained in Vanilla JS:
@@ -114,9 +119,203 @@ export function AuthProvider(props) {
 
   // Resets user state back to null (triggers App.jsx to show LoginView)
   function logout() {
+    localStorage.removeItem('sll_operator_token');
+    localStorage.removeItem('sll_operator_profile');
     setUser(null);
     setActiveOrder(null);
   }
+
+  // Logs in via real Operator API (POST /api/auth/login)
+  async function loginOperatorWithApi(email, password) {
+    const data = await loginOperator(email, password);
+    const operator = data.operator;
+    const token = data.token;
+
+    let opName = 'Operator';
+    if (operator && operator.name) {
+      opName = operator.name;
+    }
+
+    let initials = 'OP';
+    const parts = opName.trim().split(' ');
+    if (parts.length >= 2) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (opName.length >= 2) {
+      initials = opName.substring(0, 2).toUpperCase();
+    }
+
+    let stationToUse = '';
+    if (operator && operator.lockerStationId) {
+      stationToUse = operator.lockerStationId;
+    }
+
+    let emailToUse = '';
+    if (operator && operator.email) {
+      emailToUse = operator.email;
+    }
+
+    let phoneToUse = '';
+    if (operator && operator.phone) {
+      phoneToUse = operator.phone;
+    }
+
+    let operatorId = null;
+    if (operator && operator.id) {
+      operatorId = operator.id;
+    }
+
+    let statusToUse = 'active';
+    if (operator && operator.status) {
+      statusToUse = operator.status;
+    }
+
+    setUser({
+      id: operatorId,
+      operatorId: operatorId,
+      name: opName,
+      initials: initials,
+      email: emailToUse,
+      phone: phoneToUse,
+      role: ROLES.OPERATOR,
+      station: stationToUse,
+      lockerStationId: stationToUse,
+      status: statusToUse,
+      token: token,
+      location: 'Central Laundry Facility',
+    });
+
+    return data;
+  }
+
+  // Registers via real Operator API (POST /api/auth/register)
+  async function registerOperatorWithApi(params) {
+    const data = await registerOperator(params);
+    const operator = data.operator;
+    const token = data.token;
+
+    let opName = 'Operator';
+    if (operator && operator.name) {
+      opName = operator.name;
+    }
+
+    let initials = 'OP';
+    const parts = opName.trim().split(' ');
+    if (parts.length >= 2) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (opName.length >= 2) {
+      initials = opName.substring(0, 2).toUpperCase();
+    }
+
+    let stationToUse = '';
+    if (operator && operator.lockerStationId) {
+      stationToUse = operator.lockerStationId;
+    }
+
+    let emailToUse = '';
+    if (operator && operator.email) {
+      emailToUse = operator.email;
+    }
+
+    let phoneToUse = '';
+    if (operator && operator.phone) {
+      phoneToUse = operator.phone;
+    }
+
+    let operatorId = null;
+    if (operator && operator.id) {
+      operatorId = operator.id;
+    }
+
+    let statusToUse = 'active';
+    if (operator && operator.status) {
+      statusToUse = operator.status;
+    }
+
+    setUser({
+      id: operatorId,
+      operatorId: operatorId,
+      name: opName,
+      initials: initials,
+      email: emailToUse,
+      phone: phoneToUse,
+      role: ROLES.OPERATOR,
+      station: stationToUse,
+      lockerStationId: stationToUse,
+      status: statusToUse,
+      token: token,
+      location: 'Central Laundry Facility',
+    });
+
+    return data;
+  }
+
+  // Check Session / Current User Profile on load (GET /api/auth/me)
+  useEffect(function () {
+    async function restoreOperatorSession() {
+      const savedToken = localStorage.getItem('sll_operator_token');
+      if (!savedToken) {
+        return;
+      }
+      try {
+        const operator = await fetchCurrentOperatorProfile(savedToken);
+        if (operator && operator.id) {
+          let opName = 'Operator';
+          if (operator.name) {
+            opName = operator.name;
+          }
+
+          let initials = 'OP';
+          const parts = opName.trim().split(' ');
+          if (parts.length >= 2) {
+            initials = (parts[0][0] + parts[1][0]).toUpperCase();
+          } else if (opName.length >= 2) {
+            initials = opName.substring(0, 2).toUpperCase();
+          }
+
+          let stationToUse = '';
+          if (operator.lockerStationId) {
+            stationToUse = operator.lockerStationId;
+          }
+
+          let emailToUse = '';
+          if (operator.email) {
+            emailToUse = operator.email;
+          }
+
+          let phoneToUse = '';
+          if (operator.phone) {
+            phoneToUse = operator.phone;
+          }
+
+          let statusToUse = 'active';
+          if (operator.status) {
+            statusToUse = operator.status;
+          }
+
+          setUser({
+            id: operator.id,
+            operatorId: operator.id,
+            name: opName,
+            initials: initials,
+            email: emailToUse,
+            phone: phoneToUse,
+            role: ROLES.OPERATOR,
+            station: stationToUse,
+            lockerStationId: stationToUse,
+            status: statusToUse,
+            token: savedToken,
+            location: 'Central Laundry Facility',
+          });
+        } else {
+          localStorage.removeItem('sll_operator_token');
+          localStorage.removeItem('sll_operator_profile');
+        }
+      } catch (err) {
+        console.warn('[AuthContext] Session restore skipped:', err);
+      }
+    }
+    restoreOperatorSession();
+  }, []);
 
   // Logs in as Delivery Driver / Field Ops Route Rider
   function loginAsRider(riderName, vanPlate) {
@@ -305,6 +504,8 @@ export function AuthProvider(props) {
     signupCustomer: signupCustomer,
     loginAsRider: loginAsRider,
     loginAsOperator: loginAsOperator,
+    loginOperatorWithApi: loginOperatorWithApi,
+    registerOperatorWithApi: registerOperatorWithApi,
     updateOrderStatus: updateOrderStatus,
     logout: logout,
     createOrder: createOrder,

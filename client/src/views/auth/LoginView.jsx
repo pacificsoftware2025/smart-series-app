@@ -1,581 +1,453 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  ArrowRight, 
-  User, 
+  Building2, 
   Truck, 
-  Lock, 
-  UserPlus, 
-  LogIn,
-  X,
   AlertCircle,
-  Monitor
+  Loader2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import kioskIllustration from '../../assets/images/smartbox-kiosk-illustration.jpg';
 import './LoginView.css';
 
 // ==============================================================================
 // REACT COMPONENT: LoginView
-// Modern mobile-first login & registration portal with phone authentication,
-// new user signup, and guest mode.
+// Split-Screen Layout with Operator/Rider Role Toggle and Smartbox Kiosk Visual
+// Operator authentication wired to Backend API endpoints (/register, /login, /me)
+// Strictly zero ternary operators and zero emojis.
 // ==============================================================================
 export function LoginView() {
   const auth = useAuth();
-  const loginAsGuest = auth.loginAsGuest;
-  const loginAsCustomer = auth.loginAsCustomer;
-  const signupCustomer = auth.signupCustomer;
+  const loginOperatorWithApi = auth.loginOperatorWithApi;
+  const registerOperatorWithApi = auth.registerOperatorWithApi;
+  const loginAsRider = auth.loginAsRider;
 
-  // ============================================================================
-  // LOCAL STATE (useState) explained in Vanilla JS:
-  // In Vanilla JS:
-  //   let authMode = 'signin'; // or 'signup'
-  //   function switchTab(mode) { authMode = mode; render(); }
-  // In React:
-  //   Calling setAuthMode('signup') triggers React to re-render the matching form.
-  // ============================================================================
-  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
+  // Active role selector: 'operator' | 'rider'
+  const [selectedRole, setSelectedRole] = useState('operator');
 
-  // Input fields state
+  // Mode: 'signin' | 'signup'
+  const [authMode, setAuthMode] = useState('signin');
+
+  // Form Fields (all left blank by default so only placeholders appear)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [signupName, setSignupName] = useState('');
-  const [signupPhone, setSignupPhone] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Validation error state for each form
-  const [signInError, setSignInError] = useState('');
-  const [signUpError, setSignUpError] = useState('');
-  const [guestError, setGuestError] = useState('');
-
-  // Guest Modal state
-  // In Vanilla JS: let isGuestModalOpen = false;
-  // In React: Calling setIsGuestModalOpen(true) tells React to re-render and display the modal dialog.
-  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
-  const [guestName, setGuestName] = useState('');
-  const [guestPhone, setGuestPhone] = useState('');
-
-  // ============================================================================
-  // VALIDATION & SANITIZATION HELPERS (Vanilla JS logic)
-  // - Contact numbers strictly accept integers only (0-9).
-  // - Maximum length is capped at 10 digits (e.g. 9171234567).
-  // ============================================================================
-
-  // Sanitizes phone input: strictly filters out any non-digits and caps at 10 digits.
-  function sanitizePhoneNumber(rawInput) {
-    if (!rawInput) {
-      return '';
-    }
-    // Replace all non-digit characters with an empty string
-    const digitsOnly = rawInput.replace(/\D/g, '');
-    // Limit to maximum length of 10 digits
-    if (digitsOnly.length > 10) {
-      return digitsOnly.slice(0, 10);
-    }
-    return digitsOnly;
-  }
-
-  // Validates a 10-digit Philippine mobile number
-  function validatePhoneNumber(phoneNumber) {
-    if (!phoneNumber || phoneNumber.trim() === '') {
-      return 'Please enter your mobile number';
-    }
-    if (phoneNumber.length !== 10) {
-      return 'Mobile number must be exactly 10 digits';
-    }
-    if (phoneNumber.charAt(0) !== '9') {
-      return 'Mobile number must start with 9 (e.g. 9171234567)';
-    }
-    return '';
-  }
-
-  // Input change handlers with instant sanitization
-  function handleSignInPhoneChange(e) {
-    const cleanDigits = sanitizePhoneNumber(e.target.value);
-    setPhone(cleanDigits);
-    if (signInError !== '') {
-      setSignInError('');
+  // Toggle password visibility handlers
+  function handleToggleShowPassword() {
+    if (showPassword) {
+      setShowPassword(false);
+    } else {
+      setShowPassword(true);
     }
   }
 
-  function handleSignUpPhoneChange(e) {
-    const cleanDigits = sanitizePhoneNumber(e.target.value);
-    setSignupPhone(cleanDigits);
-    if (signUpError !== '') {
-      setSignUpError('');
+  function handleToggleShowConfirmPassword() {
+    if (showConfirmPassword) {
+      setShowConfirmPassword(false);
+    } else {
+      setShowConfirmPassword(true);
     }
   }
 
-  function handleSignUpNameChange(e) {
-    setSignupName(e.target.value);
-    if (signUpError !== '') {
-      setSignUpError('');
+  function getPasswordInputType() {
+    if (showPassword) {
+      return 'text';
     }
+    return 'password';
   }
 
-  function handleGuestPhoneChange(e) {
-    const cleanDigits = sanitizePhoneNumber(e.target.value);
-    setGuestPhone(cleanDigits);
-    if (guestError !== '') {
-      setGuestError('');
+  function getConfirmPasswordInputType() {
+    if (showConfirmPassword) {
+      return 'text';
     }
+    return 'password';
   }
 
-  function handleGuestNameChange(e) {
-    setGuestName(e.target.value);
-    if (guestError !== '') {
-      setGuestError('');
-    }
+  // Role toggle handlers
+  function handleSelectOperatorRole() {
+    setSelectedRole('operator');
+    setErrorMsg('');
   }
 
-  // Handles Sign-In submit with validation
-  function handleSignInSubmit(e) {
+  function handleSelectRiderRole() {
+    setSelectedRole('rider');
+    setErrorMsg('');
+  }
+
+  // Mode switch handlers
+  function handleSwitchToSignUp() {
+    setAuthMode('signup');
+    setErrorMsg('');
+    setPassword('');
+    setConfirmPassword('');
+  }
+
+  function handleSwitchToSignIn() {
+    setAuthMode('signin');
+    setErrorMsg('');
+    setPassword('');
+    setConfirmPassword('');
+  }
+
+  // Submit Handler
+  async function handleSubmit(e) {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
-    const phoneErrorMsg = validatePhoneNumber(phone);
-    if (phoneErrorMsg !== '') {
-      setSignInError(phoneErrorMsg);
+
+    if (!email || email.trim() === '') {
+      setErrorMsg('Please enter your email address');
       return;
     }
-    setSignInError('');
-    loginAsCustomer(phone);
-  }
 
-  // Handles Sign-Up submit with validation
-  function handleSignUpSubmit(e) {
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
-    if (!signupName || signupName.trim().length < 2) {
-      setSignUpError('Please enter your full name (minimum 2 characters)');
+    if (!password || password.trim() === '') {
+      setErrorMsg('Please enter your password');
       return;
     }
-    const phoneErrorMsg = validatePhoneNumber(signupPhone);
-    if (phoneErrorMsg !== '') {
-      setSignUpError(phoneErrorMsg);
+
+    if (authMode === 'signup') {
+      if (!fullName || fullName.trim().length < 2) {
+        setErrorMsg('Please enter your full name');
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters long');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMsg('Passwords do not match');
+        return;
+      }
+    }
+
+    setErrorMsg('');
+
+    // Operator Authentication: Real Backend API endpoints (only for operators)
+    if (selectedRole === 'operator') {
+      setIsSubmitting(true);
+      try {
+        if (authMode === 'signin') {
+          // Endpoint 2: POST /api/auth/login
+          await loginOperatorWithApi(email.trim(), password);
+        } else {
+          // Endpoint 1: POST /api/auth/register
+          let phoneToSubmit = '';
+          if (phone && phone.trim() !== '') {
+            phoneToSubmit = phone.trim();
+          }
+          await registerOperatorWithApi({
+            name: fullName.trim(),
+            email: email.trim(),
+            phone: phoneToSubmit,
+            password: password,
+          });
+        }
+      } catch (err) {
+        let msg = 'Authentication failed';
+        if (err && err.message) {
+          msg = err.message;
+        }
+        setErrorMsg(msg);
+        setIsSubmitting(false);
+        return;
+      }
+      setIsSubmitting(false);
       return;
     }
-    setSignUpError('');
-    signupCustomer(signupName.trim(), signupPhone);
+
+    // Rider Authentication: Direct field ops access
+    let displayName = 'Marco Valdes';
+    if (authMode === 'signup' && fullName.trim() !== '') {
+      displayName = fullName.trim();
+    }
+    loginAsRider(displayName, 'Van #04 (Route Metro)');
   }
 
-  // Handles Guest Modal submit with validation
-  function handleGuestModalSubmit(e) {
-    if (e && e.preventDefault) {
-      e.preventDefault();
+  // Helper functions replacing ternary operators
+  function getRoleButtonClass(role) {
+    if (selectedRole === role) {
+      return 'ref-role-btn active';
     }
-    if (!guestName || guestName.trim().length < 2) {
-      setGuestError('Please enter your full name (minimum 2 characters)');
-      return;
-    }
-    const phoneErrorMsg = validatePhoneNumber(guestPhone);
-    if (phoneErrorMsg !== '') {
-      setGuestError(phoneErrorMsg);
-      return;
-    }
-    setGuestError('');
-    loginAsGuest(guestName.trim(), guestPhone);
-    setIsGuestModalOpen(false);
+    return 'ref-role-btn';
   }
 
-  // Helper function: determines CSS class for active auth tab
-  function getAuthTabClass(mode) {
-    if (authMode === mode) {
-      return 'auth-tab-btn active-tab';
+  function getHeadingGreeting() {
+    if (authMode === 'signup') {
+      return 'Create,';
     }
-    return 'auth-tab-btn';
+    return 'Holla,';
   }
 
-  // Helper function: determines CSS class for phone input when an error occurs
-  function getPhoneInputClass(hasError) {
-    if (hasError) {
-      return 'phone-input-group input-has-error';
+  function getHeadingTitle() {
+    if (authMode === 'signup') {
+      return 'New Account';
     }
-    return 'phone-input-group';
+    return 'Welcome Back';
   }
 
-  // Helper function: determines CSS class for name input wrapper when an error occurs
-  function getTextInputWrapperClass(hasError) {
-    if (hasError) {
-      return 'single-input-wrapper input-has-error';
+  function getSubheadingText() {
+    if (authMode === 'signup') {
+      return 'Hey, register your operations account to begin';
     }
-    return 'single-input-wrapper';
+    return 'Hey, welcome back to your special place';
   }
 
-  // Switches between Sign In and Sign Up tabs and clears errors
-  function handleTabSwitch(mode) {
-    setAuthMode(mode);
-    setSignInError('');
-    setSignUpError('');
+  function getSubmitButtonText() {
+    if (isSubmitting) {
+      if (authMode === 'signup') {
+        return 'Creating Account...';
+      }
+      return 'Signing In...';
+    }
+    if (authMode === 'signup') {
+      return 'Sign Up';
+    }
+    return 'Sign In';
   }
 
   return (
-    <div className="login-viewport">
-      <div className="login-mobile-frame">
-        
-        {/* Top Mobile Status Bar */}
-        <div className="login-status-bar">
-          <span className="status-time">9:41</span>
-          <div className="notch-island"></div>
-          <div className="status-indicators">
-            <span className="telemetry-pill">
-              <span className="pulse-dot"></span> BLE ON
-            </span>
-            <span className="network-pill">5G</span>
+    <div className="ref-auth-page-wrapper">
+      
+      {/* Centered Modern Dual-Panel Card */}
+      <div className="ref-auth-split-card">
+
+        {/* ------------------------------------------------------------- */}
+        {/* LEFT COLUMN: INTERACTIVE FORM & ROLE SELECTOR                 */}
+        {/* ------------------------------------------------------------- */}
+        <div className="ref-form-column">
+
+          {/* Top Brand Logo with Safety Orange Pill */}
+          <div className="ref-brand-row">
+            <span className="ref-brand-icon-pill"></span>
+            <span className="ref-brand-name">Grab 'n Go Bar</span>
           </div>
-        </div>
 
-        {/* Scrollable Container */}
-        <div className="login-scroll-body">
-          
-          {/* Hero Brand Header with Grab 'n Go Bar Logo Watermark & Gradient Fade */}
-          <div className="login-hero-section">
-            {/* Soft Radial Halo Glow */}
-            <div className="hero-halo-glow"></div>
+          {/* Large Editorial Headline */}
+          <div className="ref-headline-group">
+            <h1 className="ref-heading-greeting">{getHeadingGreeting()}</h1>
+            <h2 className="ref-heading-title">{getHeadingTitle()}</h2>
+            <p className="ref-subheading">{getSubheadingText()}</p>
+          </div>
 
-            {/* Faded Watermark Logo with Gradient Fade Mask */}
-            <div className="hero-watermark-wrap">
-              <img 
-                src="https://static.wixstatic.com/media/b15e89_67ae7ed656e9491197c7bfd8fb4090f2~mv2.png" 
-                alt="Grab n Go Logo Watermark" 
-                className="hero-watermark-img"
+          {/* ----------------------------------------------------------- */}
+          {/* 2 BUTTONS APPEAR FIRST BEFORE THE INPUT FIELDS              */}
+          {/* ----------------------------------------------------------- */}
+          <div className="ref-role-selector-wrap">
+            <span className="ref-role-hint">Select Portal Access:</span>
+            <div className="ref-role-buttons-row">
+              <button
+                type="button"
+                onClick={handleSelectOperatorRole}
+                className={getRoleButtonClass('operator')}
+              >
+                <Building2 size={16} />
+                <span>Operator</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSelectRiderRole}
+                className={getRoleButtonClass('rider')}
+              >
+                <Truck size={16} />
+                <span>Rider</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Error Message Alert Banner */}
+          {errorMsg !== '' && (
+            <div className="ref-error-banner">
+              <AlertCircle size={15} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="ref-inputs-form">
+            
+            {/* Sign Up Full Name Field */}
+            {authMode === 'signup' && (
+              <div className="ref-input-group">
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={function (e) { setFullName(e.target.value); }}
+                  placeholder="Full Name"
+                  className="ref-text-input"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Email Field */}
+            <div className="ref-input-group">
+              <input
+                type="email"
+                value={email}
+                onChange={function (e) { setEmail(e.target.value); }}
+                placeholder="Email"
+                className="ref-text-input"
+                autoComplete="email"
+                required
               />
             </div>
 
-            {/* Ambient Silhouettes for layered depth */}
-            <svg className="hero-ambient-cards" viewBox="0 0 400 240" preserveAspectRatio="none">
-              <rect x="-30" y="30" width="130" height="120" rx="26" fill="#ffffff" transform="rotate(-15)" />
-              <rect x="290" y="40" width="140" height="130" rx="28" fill="#ffffff" transform="rotate(18)" />
-            </svg>
-
-            {/* Foreground Content */}
-            <div className="hero-content">
-              <h1 className="hero-title">Welcome Back</h1>
-              <p className="hero-subtitle">
-                Automated drop-off, real-time laundry tracking, & secure contact-free lockers.
-              </p>
-            </div>
-          </div>
-
-          {/* Main Card Container */}
-          <div className="login-form-card">
-            
-            {/* ------------------------------------------------------------- */}
-            {/* SEGMENTED AUTH TABS (Sign In vs Sign Up)                      */}
-            {/* ------------------------------------------------------------- */}
-            <div className="auth-tab-bar">
-              <button
-                type="button"
-                onClick={function () { handleTabSwitch('signin'); }}
-                className={getAuthTabClass('signin')}
-              >
-                <LogIn size={14} />
-                <span>Sign In</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={function () { handleTabSwitch('signup'); }}
-                className={getAuthTabClass('signup')}
-              >
-                <UserPlus size={14} />
-                <span>Sign Up</span>
-              </button>
-            </div>
-
-            {/* ------------------------------------------------------------- */}
-            {/* TAB 1: SIGN IN FORM                                           */}
-            {/* ------------------------------------------------------------- */}
-            {authMode === 'signin' && (
-              <form onSubmit={handleSignInSubmit} className="login-form">
-                <div className="form-label-row">
-                  <label htmlFor="phone-input" className="form-label">Mobile Number</label>
-                </div>
-
-                <div className={getPhoneInputClass(signInError !== '')}>
-                  <div className="country-prefix">
-                    <span className="country-code-text">PH</span>
-                    <span className="country-code">+63</span>
-                  </div>
-                  <input 
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={10}
-                    id="phone-input"
-                    value={phone}
-                    onChange={handleSignInPhoneChange}
-                    placeholder="9XX XXX XXXX"
-                    className="phone-field"
-                    autoComplete="tel"
-                    required
-                  />
-                </div>
-
-                {signInError !== '' && (
-                  <div className="form-error-banner">
-                    <AlertCircle size={14} />
-                    <span>{signInError}</span>
-                  </div>
-                )}
-
-                {/* Primary Sign In Button */}
-                <button type="submit" className="login-primary-btn">
-                  <span>Login</span>
-                  <ArrowRight size={18} />
-                </button>
-
-                {/* Quick Switch to Sign Up */}
-                <p className="auth-switch-prompt">
-                  Don't have an account?{' '}
-                  <button 
-                    type="button" 
-                    onClick={function () { handleTabSwitch('signup'); }} 
-                    className="auth-switch-link"
-                  >
-                    Create one here
-                  </button>
-                </p>
-              </form>
+            {/* Operator Sign Up: Additional Phone Field */}
+            {authMode === 'signup' && selectedRole === 'operator' && (
+              <div className="ref-input-group">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={function (e) { setPhone(e.target.value); }}
+                  placeholder="Phone Number"
+                  className="ref-text-input"
+                />
+              </div>
             )}
 
-            {/* ------------------------------------------------------------- */}
-            {/* TAB 2: SIGN UP FORM                                           */}
-            {/* ------------------------------------------------------------- */}
+            {/* Password Field with Show/Hide Toggle */}
+            <div className="ref-input-group ref-password-group">
+              <input
+                type={getPasswordInputType()}
+                value={password}
+                onChange={function (e) { setPassword(e.target.value); }}
+                placeholder="Password"
+                className="ref-text-input ref-password-input"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={handleToggleShowPassword}
+                className="ref-password-toggle-btn"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword && <EyeOff size={18} />}
+                {!showPassword && <Eye size={18} />}
+              </button>
+            </div>
+
+            {/* Sign Up Confirm Password Field with Show/Hide Toggle */}
             {authMode === 'signup' && (
-              <form onSubmit={handleSignUpSubmit} className="login-form">
-                
-                {/* Full Name Input */}
-                <div className="form-group-block">
-                  <label htmlFor="signup-name-input" className="form-label">Full Name</label>
-                  <div className={getTextInputWrapperClass(signUpError !== '' && (!signupName || signupName.trim().length < 2))}>
-                    <input 
-                      type="text"
-                      id="signup-name-input"
-                      value={signupName}
-                      onChange={handleSignUpNameChange}
-                      placeholder="e.g. Maria Santos"
-                      className="text-input-field"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile Number Input */}
-                <div className="form-group-block">
-                  <label htmlFor="signup-phone-input" className="form-label">Mobile Number</label>
-                  <div className={getPhoneInputClass(signUpError !== '' && (signupPhone.length !== 10 || signupPhone.charAt(0) !== '9'))}>
-                    <div className="country-prefix">
-                      <span className="country-code-text">PH</span>
-                      <span className="country-code">+63</span>
-                    </div>
-                    <input 
-                      type="tel"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={10}
-                      id="signup-phone-input"
-                      value={signupPhone}
-                      onChange={handleSignUpPhoneChange}
-                      placeholder="9XX XXX XXXX"
-                      className="phone-field"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {signUpError !== '' && (
-                  <div className="form-error-banner">
-                    <AlertCircle size={14} />
-                    <span>{signUpError}</span>
-                  </div>
-                )}
-
-                {/* Primary Sign Up Button */}
-                <button type="submit" className="login-primary-btn">
-                  <span>Create Account & Continue</span>
-                  <ArrowRight size={18} />
+              <div className="ref-input-group ref-password-group">
+                <input
+                  type={getConfirmPasswordInputType()}
+                  value={confirmPassword}
+                  onChange={function (e) { setConfirmPassword(e.target.value); }}
+                  placeholder="Confirm Password"
+                  className="ref-text-input ref-password-input"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleToggleShowConfirmPassword}
+                  className="ref-password-toggle-btn"
+                  aria-label="Toggle confirm password visibility"
+                >
+                  {showConfirmPassword && <EyeOff size={18} />}
+                  {!showConfirmPassword && <Eye size={18} />}
                 </button>
-
-                {/* Quick Switch to Sign In */}
-                <p className="auth-switch-prompt">
-                  Already registered?{' '}
-                  <button 
-                    type="button" 
-                    onClick={function () { handleTabSwitch('signin'); }} 
-                    className="auth-switch-link"
-                  >
-                    Sign in to your account
-                  </button>
-                </p>
-              </form>
+              </div>
             )}
 
-            {/* Clean Divider */}
-            <div className="divider-row">
-              <span className="divider-line"></span>
-              <span className="divider-label">OR</span>
-              <span className="divider-line"></span>
+            {/* Remember Me & Forgot Password Row */}
+            {authMode === 'signin' && (
+              <div className="ref-options-row">
+                <label className="ref-remember-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={function (e) { setRememberMe(e.target.checked); }}
+                    className="ref-checkbox"
+                  />
+                  <span>Remember me</span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={function () {
+                    alert('Password recovery: Contact system administrator at admin@grabngobar.store');
+                  }}
+                  className="ref-forgot-btn"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
+            {/* Main Action Button in Brand Safety Orange */}
+            <button 
+              type="submit" 
+              className="ref-submit-btn" 
+              disabled={isSubmitting}
+            >
+              <span className="ref-submit-btn-inner">
+                {isSubmitting && <Loader2 size={16} className="ref-spin" />}
+                <span>{getSubmitButtonText()}</span>
+              </span>
+            </button>
+
+            {/* Bottom Toggle Between Sign In and Sign Up */}
+            <div className="ref-switch-mode-row">
+              {authMode === 'signin' && (
+                <p className="ref-switch-text">
+                  Don't have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={handleSwitchToSignUp}
+                    className="ref-switch-link"
+                  >
+                    Sign Up
+                  </button>
+                </p>
+              )}
+
+              {authMode === 'signup' && (
+                <p className="ref-switch-text">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={handleSwitchToSignIn}
+                    className="ref-switch-link"
+                  >
+                    Sign In
+                  </button>
+                </p>
+              )}
             </div>
 
-            {/* Guest Action Card */}
-            {/* In Vanilla JS: button.onclick = function() { modal.style.display = 'flex'; } */}
-            <button 
-              type="button" 
-              onClick={function () { setIsGuestModalOpen(true); }} 
-              className="guest-action-card"
-            >
-              <div className="guest-card-left">
-                <div className="guest-icon-circle">
-                  <User size={18} />
-                </div>
-                <div className="guest-info">
-                  <span className="guest-title">Continue as Guest</span>
-                  <span className="guest-desc">Quick drop-off without registering</span>
-                </div>
-              </div>
-              <ArrowRight size={16} className="guest-arrow" />
-            </button>
+          </form>
 
-            {/* Logistics / Rider Access Portal */}
-            <button
-              type="button"
-              onClick={function () { auth.loginAsRider(); }}
-              className="rider-action-card"
-            >
-              <div className="rider-card-left">
-                <div className="rider-icon-circle">
-                  <Truck size={17} />
-                </div>
-                <div className="rider-info">
-                  <span className="rider-title">Van Logistics & Rider</span>
-                  <span className="rider-desc">Scheduled pickup route portal</span>
-                </div>
-              </div>
-              <ArrowRight size={16} className="guest-arrow rider-arrow" />
-            </button>
+        </div>
 
-            {/* Facility Operator & Laundry Staff Access Portal */}
-            <button
-              type="button"
-              onClick={function () { auth.loginAsOperator(); }}
-              className="operator-action-card"
-            >
-              <div className="operator-card-left">
-                <div className="operator-icon-circle">
-                  <Monitor size={17} />
-                </div>
-                <div className="operator-info">
-                  <span className="operator-title">Facility Operator & Staff</span>
-                  <span className="operator-desc">Weighing, wash cycles & locker telemetry</span>
-                </div>
-              </div>
-              <ArrowRight size={16} className="guest-arrow operator-arrow" />
-            </button>
-
+        {/* ------------------------------------------------------------- */}
+        {/* RIGHT COLUMN: OFFICIAL SMARTBOX LAUNDRY LOCKER KIOSK PHOTO    */}
+        {/* ------------------------------------------------------------- */}
+        <div className="ref-artwork-column">
+          <div className="ref-artwork-card">
+            <img 
+              src={kioskIllustration} 
+              alt="Grab 'n Go Smartbox Smart Laundry Locker Kiosk" 
+              className="ref-artwork-photo"
+            />
           </div>
-
-          {/* Footer Notice */}
-          <div className="login-security-notice">
-            <span>© 2026 www.grabngobar.store</span>
-          </div>
-
         </div>
 
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* GUEST ACCESS MODAL (Name & Mobile Number input fields)         */}
-      {/* In Vanilla JS: if (isGuestModalOpen) { append modal to body } */}
-      {/* ------------------------------------------------------------- */}
-      {isGuestModalOpen && (
-        <div className="guest-modal-backdrop">
-          <div className="guest-modal-card">
-            
-            {/* Modal Header */}
-            <div className="guest-modal-header">
-              <div className="guest-header-titles">
-                <h3 className="guest-modal-title">Guest Drop-Off Access</h3>
-                <p className="guest-modal-subtitle">
-                  We need your name and phone number to send your locker claim PIN.
-                </p>
-              </div>
-
-              <button 
-                type="button" 
-                onClick={function () { setIsGuestModalOpen(false); }} 
-                className="guest-modal-close-btn"
-                aria-label="Close"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Guest Input Form */}
-            <form onSubmit={handleGuestModalSubmit} className="guest-modal-form">
-              
-              {/* Full Name Input */}
-              <div className="form-group-block">
-                <label htmlFor="guest-name-input" className="form-label">Full Name</label>
-                <div className={getTextInputWrapperClass(guestError !== '' && (!guestName || guestName.trim().length < 2))}>
-                  <input 
-                    type="text"
-                    id="guest-name-input"
-                    value={guestName}
-                    onChange={handleGuestNameChange}
-                    placeholder="e.g. Maria Santos"
-                    className="text-input-field"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Mobile Number Input */}
-              <div className="form-group-block">
-                <label htmlFor="guest-phone-input" className="form-label">Mobile Number</label>
-                <div className={getPhoneInputClass(guestError !== '' && (guestPhone.length !== 10 || guestPhone.charAt(0) !== '9'))}>
-                  <div className="country-prefix">
-                    <span className="country-code-text">PH</span>
-                    <span className="country-code">+63</span>
-                  </div>
-                  <input 
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={10}
-                    id="guest-phone-input"
-                    value={guestPhone}
-                    onChange={handleGuestPhoneChange}
-                    placeholder="9XX XXX XXXX"
-                    className="phone-field"
-                    required
-                  />
-                </div>
-              </div>
-
-              {guestError !== '' && (
-                <div className="form-error-banner">
-                  <AlertCircle size={14} />
-                  <span>{guestError}</span>
-                </div>
-              )}
-
-              {/* Primary Action Button */}
-              <button type="submit" className="login-primary-btn">
-                <span>Proceed as Guest</span>
-                <ArrowRight size={18} />
-              </button>
-
-              {/* Cancel Button */}
-              <button 
-                type="button" 
-                onClick={function () { setIsGuestModalOpen(false); }} 
-                className="guest-modal-cancel-btn"
-              >
-                Cancel
-              </button>
-            </form>
-
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+export default LoginView;

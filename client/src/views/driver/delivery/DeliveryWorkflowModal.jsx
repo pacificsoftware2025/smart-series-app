@@ -79,7 +79,8 @@ export function DeliveryWorkflowModal(props) {
 
       // Fetch live available boxes from cloud database
       setIsLoadingBoxes(true);
-      fetchStationCompartments('CMH-01')
+      const targetStation = (order && order.station_id) || 'SLL-31690';
+      fetchStationCompartments(targetStation)
         .then(function (comps) {
           if (Array.isArray(comps)) {
             const vacant = comps
@@ -217,7 +218,8 @@ export function DeliveryWorkflowModal(props) {
 
     try {
       // 1. Post delivery to live backend API (/api/orders/:id/deliver)
-      const res = await deliverCleanOrder(order.id, chosenBoxNumber, 'CMH-01');
+      const targetStation = (order && order.station_id) || 'SLL-31690';
+      const res = await deliverCleanOrder(order.id, chosenBoxNumber, targetStation);
       const backendPin = extractPinFromResponse(res);
 
       if (backendPin) {

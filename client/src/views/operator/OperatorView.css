@@ -302,6 +302,45 @@
   letter-spacing: -0.01em;
 }
 
+.canvas-station-select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.canvas-station-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 2px 22px 2px 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.canvas-station-dropdown:hover {
+  color: #ea580c;
+}
+
+.canvas-station-dropdown:focus {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+  padding-left: 6px;
+}
+
+.canvas-station-dropdown-icon {
+  position: absolute;
+  right: 2px;
+  pointer-events: none;
+  color: #64748b;
+}
+
 .canvas-telemetry-status {
   display: inline-flex;
   align-items: center;

@@ -22,13 +22,17 @@ export async function fetchStationCompartments(stationId = ENV.stationId) {
  */
 export async function fetchOrders(statusFilter) {
   try {
-    const url = statusFilter 
-      ? `${BASE_URL}/orders?status=${encodeURIComponent(statusFilter)}` 
-      : `${BASE_URL}/orders`;
+    let url = `${BASE_URL}/orders`;
+    if (statusFilter) {
+      url = `${BASE_URL}/orders?status=${encodeURIComponent(statusFilter)}`;
+    }
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    return json.data || [];
+    if (json && json.data) {
+      return json.data;
+    }
+    return [];
   } catch (err) {
     console.warn('[API] Failed to fetch orders:', err);
     return [];
@@ -216,17 +220,169 @@ export async function fetchLockerStations() {
     }
     return [];
   } catch (err) {
-    console.warn('[API] fetchLockerStations error, returning default fallback:', err);
-    return [
-      {
-        id: 'CMH-01',
-        name: 'Central Mall Hub',
-        address: 'Ground Floor, North Atrium',
-        total_compartments: 16,
-        status: 'online',
-        binding_status: 'BOUND_ACTIVE',
-        updated_at: new Date().toISOString(),
-      },
-    ];
+    console.warn('[API] fetchLockerStations error:', err);
+    return [];
   }
 }
+
+// ==============================================================================
+// OPERATOR AUTHENTICATION SERVICES (Endpoints 1, 2, 3)
+// ==============================================================================
+
+/**
+ * 2. Login Endpoint (Operator Authentication)
+ * Route: POST /api/auth/login
+ * Body: { email, password }
+ * Response: { success: true, message: "Login successful", operator, token }
+ */
+export async function loginOperator(email, password) {
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password }),
+    });
+  } catch (netErr) {
+    throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+  }
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (parseErr) {
+    data = {};
+  }
+
+  if (!res.ok) {
+    let errorMsg = 'Invalid email or password';
+    if (data && data.message) {
+      errorMsg = data.message;
+    } else {
+      errorMsg = 'HTTP ' + res.status + ' Login failed';
+    }
+    throw new Error(errorMsg);
+  }
+
+  if (data && data.token) {
+    localStorage.setItem('sll_operator_token', data.token);
+    if (data.operator) {
+      localStorage.setItem('sll_operator_profile', JSON.stringify(data.operator));
+    }
+  }
+  return data;
+}
+
+/**
+ * 1. Sign Up Endpoint (Operator Registration)
+ * Route: POST /api/auth/register
+ * Body: { name, email, phone, password }
+ * Response: { success: true, message: "Operator registered successfully", operator, token }
+ */
+export async function registerOperator(params) {
+  const name = params.name;
+  const email = params.email;
+  const phone = params.phone;
+  const password = params.password;
+
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        phone: phone,
+        password: password,
+      }),
+    });
+  } catch (netErr) {
+    throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+  }
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (parseErr) {
+    data = {};
+  }
+
+  if (!res.ok) {
+    let errorMsg = 'Registration failed';
+    if (data && data.message) {
+      errorMsg = data.message;
+    } else {
+      errorMsg = 'HTTP ' + res.status + ' Registration failed';
+    }
+    throw new Error(errorMsg);
+  }
+
+  if (data && data.token) {
+    localStorage.setItem('sll_operator_token', data.token);
+    if (data.operator) {
+      localStorage.setItem('sll_operator_profile', JSON.stringify(data.operator));
+    }
+  }
+  return data;
+}
+
+/**
+ * 3. Check Session / Current User Profile
+ * Route: GET /api/auth/me
+ * Header: Authorization: Bearer <token>
+ * Response: { success: true, operator: { ... } }
+ */
+export async function fetchCurrentOperatorProfile(tokenOverride) {
+  let token = tokenOverride;
+  if (!token) {
+    token = localStorage.getItem('sll_operator_token');
+  }
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/auth/me`, {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!res.ok) {
+      return null;
+    }
+    const data = await res.json();
+    if (data && data.operator) {
+      return data.operator;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[API] Failed to fetch operator session:', err);
+    return null;
+  }
+}
+
+/**
+ * Fetches all registered operators for central management views.
+ * Route: GET /api/auth/operators
+ */
+export async function fetchAllOperators() {
+  try {
+    const res = await fetch(`${BASE_URL}/auth/operators`);
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    if (data && data.operators) {
+      return data.operators;
+    }
+    return [];
+  } catch (err) {
+    console.warn('[API] Failed to fetch operators list:', err);
+    return [];
+  }
+}
+
+// Named Aliases
+export const loginOperatorApi = loginOperator;
+export const registerOperatorApi = registerOperator;
+export const fetchCurrentOperatorApi = fetchCurrentOperatorProfile;
+
