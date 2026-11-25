@@ -16,13 +16,31 @@ import './WashingBillingTab.css';
 // Helper to map DB order to billing bag item
 function mapOrderToBag(order) {
   const digits = String(order.id).replace(/\D/g, '');
-  const tagCode = `BAG-${digits.length >= 4 ? digits.slice(-4) : '1001'}`;
+  let tagSuffix = '1001';
+  if (digits.length >= 4) {
+    tagSuffix = digits.slice(-4);
+  }
+  const tagCode = 'BAG-' + tagSuffix;
   
   let rate = 60.00;
   const tier = (order.service_tier || '').toLowerCase();
-  if (tier.includes('wash only')) rate = 40.00;
-  else if (tier.includes('iron')) rate = 65.00;
-  else if (tier.includes('dry')) rate = 55.00;
+  if (tier.includes('wash only')) {
+    rate = 40.00;
+  } else if (tier.includes('iron')) {
+    rate = 65.00;
+  } else if (tier.includes('dry')) {
+    rate = 55.00;
+  }
+
+  let bagStatus = 'pending_intake';
+  if (order.status === 'in_wash') {
+    bagStatus = 'in_wash';
+  }
+
+  let defaultWt = 5.0;
+  if (order.weight_kg) {
+    defaultWt = parseFloat(order.weight_kg);
+  }
 
   return {
     bagTag: tagCode,
@@ -37,8 +55,8 @@ function mapOrderToBag(order) {
     fabricSoftener: order.fabric_softener !== false,
     specialInstructions: order.special_instructions || 'Standard care',
     ratePerKg: rate,
-    defaultWeight: order.weight_kg ? parseFloat(order.weight_kg) : 5.0,
-    status: order.status === 'in_wash' ? 'in_wash' : 'pending_intake',
+    defaultWeight: defaultWt,
+    status: bagStatus,
   };
 }
 
@@ -51,6 +69,7 @@ function mapOrderToBag(order) {
 // ==============================================================================
 export function WashingBillingTab(props) {
   const onStatusChange = props.onStatusChange;
+  const onNavigateToInWash = props.onNavigateToInWash;
 
   const auth = useAuth();
   const activeOrder = auth.activeOrder;
@@ -76,10 +95,10 @@ export function WashingBillingTab(props) {
     try {
       const orders = await fetchOrders();
       if (Array.isArray(orders)) {
-        // Filter for orders in dropped_off, in_transit, or in_wash
-        const relevant = orders.filter(o => 
-          o.status === 'in_transit' || o.status === 'dropped_off' || o.status === 'in_wash'
-        );
+        // Filter for incoming orders needing intake/billing
+        const relevant = orders.filter(function (o) {
+          return o.status === 'in_transit' || o.status === 'dropped_off';
+        });
 
         const mapped = relevant.map(mapOrderToBag);
         setBagsList(mapped);
@@ -230,27 +249,30 @@ export function WashingBillingTab(props) {
       // 1. Post to live API
       await intakeOrder(selectedBag.orderId, totalWeight, parseFloat(totalAmountDue));
 
-      // 2. Update local bag state to 'in_wash'
-      const updatedList = bagsList.map(function (b) {
-        if (b.bagTag === selectedBag.bagTag) {
-          return Object.assign({}, b, {
-            status: 'in_wash',
-            verifiedWeight: totalWeight,
-            finalTotal: totalAmountDue,
-          });
-        }
-        return b;
+      const processedOrderId = selectedBag.orderId;
+      const processedCustomer = selectedBag.customerName;
+      const processedPhone = selectedBag.customerPhone;
+
+      // 2. Remove billed bag from pending list so it immediately transfers to In Wash
+      const remainingList = bagsList.filter(function (b) {
+        return b.orderId !== selectedBag.orderId;
       });
-      setBagsList(updatedList);
+      setBagsList(remainingList);
+      if (remainingList.length > 0) {
+        setSelectedBag(remainingList[0]);
+        setTotalWeight(remainingList[0].defaultWeight || 5.0);
+      } else {
+        setSelectedBag(null);
+      }
 
       // 3. Notification banner text
       setNotificationMsg(
-        `SMS sent to ${selectedBag.customerName} (${selectedBag.customerPhone}) • Verified: ${totalWeight} kg • Total: ₱${totalAmountDue} • Order #${selectedBag.orderId} moved to IN WASH`
+        'SMS sent to ' + processedCustomer + ' (' + processedPhone + ') • Verified: ' + totalWeight + ' kg • Total: ₱' + totalAmountDue + ' • Order #' + processedOrderId + ' moved to IN WASH'
       );
 
       // 4. Trigger global status callback to sync customer active dashboard tracker
       if (onStatusChange) {
-        onStatusChange(selectedBag.orderId, 'in_wash', {
+        onStatusChange(processedOrderId, 'in_wash', {
           weightKg: totalWeight,
           finalAmountDue: parseFloat(totalAmountDue),
         });
@@ -258,7 +280,7 @@ export function WashingBillingTab(props) {
     } catch (err) {
       console.warn('[WashingBillingTab] Intake API error:', err);
       // Fallback local update
-      setNotificationMsg(`Order #${selectedBag.orderId} moved to IN WASH (Verified: ${totalWeight} kg • ₱${totalAmountDue})`);
+      setNotificationMsg('Order #' + selectedBag.orderId + ' moved to IN WASH (Verified: ' + totalWeight + ' kg • ₱' + totalAmountDue + ')');
     } finally {
       setIsProcessing(false);
     }
@@ -368,12 +390,23 @@ export function WashingBillingTab(props) {
         {/* Toast / Notification Banner */}
         {notificationMsg !== '' && (
           <div className="clean-notification-toast">
-            <CheckCircle2 size={16} color="#059669" />
-            <span>{notificationMsg}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+              <CheckCircle2 size={16} color="#059669" />
+              <span>{notificationMsg}</span>
+            </div>
+            {onNavigateToInWash && (
+              <button
+                type="button"
+                onClick={onNavigateToInWash}
+                className="clean-view-inwash-btn"
+              >
+                <span>View In Wash Tab →</span>
+              </button>
+            )}
           </div>
         )}
 
-        {selectedBag ? (
+        {selectedBag && (
           <div className="clean-pos-card">
             
             {/* Header Row: Title & Fetched Order / Tag Pills */}
@@ -608,7 +641,9 @@ export function WashingBillingTab(props) {
             </div>
 
           </div>
-        ) : (
+        )}
+
+        {!selectedBag && (
           <div className="clean-pos-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '380px', color: '#64748b' }}>
             <p>Select a laundry bag from the left list to calculate billing and start wash cycle.</p>
           </div>

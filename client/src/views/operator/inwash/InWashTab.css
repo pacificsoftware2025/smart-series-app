@@ -1,0 +1,611 @@
+/* ==============================================================================
+   InWashTab.css — Facility Laundry In-Wash Cycle Tracking & Operations
+   Stripe/SaaS enterprise aesthetics in Safety Orange & Slate theme
+   Strictly zero emojis
+   ============================================================================== */
+
+.inwash-container {
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+@media (max-width: 768px) {
+  .inwash-container {
+    padding: 1rem;
+    gap: 1rem;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 1. TOP HEADER                                                              */
+/* -------------------------------------------------------------------------- */
+.inwash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.inwash-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.inwash-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inwash-header-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.inwash-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffedd5;
+  color: #c2410c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #fed7aa;
+}
+
+.inwash-header-sub {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.inwash-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inwash-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #ea580c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+  font-family: inherit;
+}
+
+.inwash-btn-primary:hover {
+  background-color: #c2410c;
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.35);
+}
+
+.inwash-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.inwash-btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2. STATS KPI CARDS ROW                                                     */
+/* -------------------------------------------------------------------------- */
+.inwash-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .inwash-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .inwash-stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inwash-stat-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.inwash-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.inwash-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.inwash-stat-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.inwash-stat-sub {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.inwash-stat-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inwash-stat-icon-wrap.orange {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.inwash-stat-icon-wrap.blue {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.inwash-stat-icon-wrap.green {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.inwash-stat-icon-wrap.purple {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3. FILTER & SEARCH CONTROLS                                                */
+/* -------------------------------------------------------------------------- */
+.inwash-toolbar {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.inwash-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  max-width: 420px;
+}
+
+.inwash-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.inwash-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.85rem 0.55rem 2.4rem;
+  font-size: 0.8125rem;
+  color: #0f172a;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.inwash-search-input:focus {
+  border-color: #ea580c;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+
+.inwash-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.inwash-filter-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.inwash-filter-btn:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.inwash-filter-btn.active {
+  background-color: #ea580c;
+  border-color: #ea580c;
+  color: #ffffff;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4. ORDERS CARDS GRID & TABLE                                               */
+/* -------------------------------------------------------------------------- */
+.inwash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .inwash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inwash-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inwash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+}
+
+/* Card Top Row */
+.inwash-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.inwash-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.inwash-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inwash-bag-code {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #ea580c;
+  letter-spacing: -0.01em;
+}
+
+.inwash-order-id {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.inwash-customer-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.inwash-customer-phone {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Status Badges */
+.inwash-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.inwash-badge-blue {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.inwash-badge-amber {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.inwash-badge-green {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.inwash-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.inwash-badge-dot.pulse {
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Spec Chips & Care Details */
+.inwash-spec-box {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.inwash-spec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.inwash-spec-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.inwash-spec-val {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.inwash-care-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.inwash-care-pill {
+  font-size: 0.6875rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Cycle Progress Bar */
+.inwash-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.inwash-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.inwash-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background-color: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.inwash-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ea580c 0%, #f97316 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Card Bottom Action Row */
+.inwash-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.inwash-price-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.inwash-price-label {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.inwash-price-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ea580c;
+}
+
+.inwash-card-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inwash-action-btn {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.inwash-action-btn:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.inwash-complete-btn {
+  background-color: #059669;
+  border: 1px solid #059669;
+  color: #ffffff;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.inwash-complete-btn:hover {
+  background-color: #047857;
+  border-color: #047857;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5. EMPTY STATE                                                             */
+/* -------------------------------------------------------------------------- */
+.inwash-empty-card {
+  background-color: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.inwash-empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background-color: #fff7ed;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.inwash-empty-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.inwash-empty-sub {
+  font-size: 0.8125rem;
+  color: #64748b;
+  max-width: 460px;
+  line-height: 1.5;
+  margin: 0 0 0.5rem 0;
+}

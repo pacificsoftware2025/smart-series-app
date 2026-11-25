@@ -16,9 +16,11 @@ import {
   RotateCw,
   Plus,
   Loader2,
-  Link2
+  Link2,
+  Waves
 } from 'lucide-react';
 import { WashingBillingTab } from './intake/WashingBillingTab';
+import { InWashTab } from './inwash/InWashTab';
 import { LockerMonitoringTab } from './hardware/LockerMonitoringTab';
 import { LaundryLockerBindingTab } from './binding/LaundryLockerBindingTab';
 import { fetchOrders, fetchStationCompartments, fetchLockerStations } from '../../services/api';
@@ -90,9 +92,10 @@ export function OperatorView() {
   // Poll live orders, compartments for the active station, and fleet list
   const loadDashboardData = useCallback(async function () {
     try {
+      const currentOpId = user?.id || user?.operatorId || null;
       const [orders, stations] = await Promise.all([
-        fetchOrders(),
-        fetchLockerStations(),
+        fetchOrders(null, currentOpId),
+        fetchLockerStations(currentOpId),
       ]);
 
       if (Array.isArray(orders)) {
@@ -134,6 +137,7 @@ export function OperatorView() {
   let inWashCount = 0;
   let completedCount = 0;
   let totalRevenue = 0;
+  let pendingBillingCount = 0;
 
   for (let i = 0; i < ordersList.length; i++) {
     const o = ordersList[i];
@@ -141,6 +145,9 @@ export function OperatorView() {
     if (o.status === 'in_transit') inTransitCount++;
     if (o.status === 'in_wash') inWashCount++;
     if (o.status === 'completed') completedCount++;
+    if (o.status === 'dropped_off' || o.status === 'in_transit') {
+      pendingBillingCount++;
+    }
     if (o.amount) {
       totalRevenue += parseFloat(o.amount) || 0;
     }
@@ -289,7 +296,17 @@ export function OperatorView() {
           >
             <RotateCw size={16} />
             <span>Washing & Billing</span>
-            {inWashCount > 0 && <span className="sidebar-item-pill">{inWashCount}</span>}
+            {pendingBillingCount > 0 && <span className="sidebar-item-pill">{pendingBillingCount}</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={function () { setActiveNav('in_wash'); }}
+            className={getNavLinkClass('in_wash')}
+          >
+            <Waves size={16} />
+            <span>In Wash</span>
+            {inWashCount > 0 && <span className="sidebar-item-pill pill-orange">{inWashCount}</span>}
           </button>
 
           <button
@@ -589,7 +606,18 @@ export function OperatorView() {
 
         {/* VIEW 2: WASHING & BILLING WORKBENCH */}
         {activeNav === 'washing' && (
-          <WashingBillingTab onStatusChange={handleStatusChange} />
+          <WashingBillingTab 
+            onStatusChange={handleStatusChange} 
+            onNavigateToInWash={function () { setActiveNav('in_wash'); }}
+          />
+        )}
+
+        {/* VIEW 3: IN WASH TAB */}
+        {activeNav === 'in_wash' && (
+          <InWashTab 
+            onNavigateToBilling={function () { setActiveNav('washing'); }}
+            onStatusChange={handleStatusChange}
+          />
         )}
 
         {/* VIEW 3: LOCKER MONITORING HARDWARE GRID */}

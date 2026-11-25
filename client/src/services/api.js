@@ -20,13 +20,13 @@ export async function fetchStationCompartments(stationId = ENV.stationId) {
 /**
  * Fetches orders list, optionally filtered by status ('dropped_off', 'in_transit', 'in_wash', 'ready_for_pickup', 'completed').
  */
-export async function fetchOrders(statusFilter) {
+export async function fetchOrders(statusFilter, operatorId) {
   try {
-    let url = `${BASE_URL}/orders`;
-    if (statusFilter) {
-      url = `${BASE_URL}/orders?status=${encodeURIComponent(statusFilter)}`;
-    }
-    const res = await fetch(url);
+    const params = new URLSearchParams();
+    if (statusFilter) params.append('status', statusFilter);
+    if (operatorId) params.append('operatorId', operatorId);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${BASE_URL}/orders${qs}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if (json && json.data) {
@@ -158,6 +158,9 @@ export async function sendPairingRequest(params) {
       stationName: params.stationName,
       address: params.address,
       branchTag: params.branchTag,
+      totalDoors: params.totalDoors,
+      operatorId: params.operatorId,
+      operatorName: params.operatorName,
     }),
   });
 
@@ -206,11 +209,15 @@ export async function confirmPairing(stationId, pairingCode) {
 
 /**
  * Fetches all registered fleet locker stations for Operator views.
+ * Multi-tenant: If operatorId is passed, filters strictly to that operator.
  * Route: GET /api/stations
  */
-export async function fetchLockerStations() {
+export async function fetchLockerStations(operatorId) {
   try {
-    const res = await fetch(`${BASE_URL}/stations`);
+    const url = operatorId
+      ? `${BASE_URL}/stations?operatorId=${encodeURIComponent(operatorId)}`
+      : `${BASE_URL}/stations`;
+    const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} Failed to fetch locker stations`);
     }

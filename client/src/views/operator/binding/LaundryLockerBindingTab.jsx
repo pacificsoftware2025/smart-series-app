@@ -18,6 +18,7 @@ import {
   fetchStationCompartments,
   fetchLockerStations
 } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import './LaundryLockerBindingTab.css';
 
 // ==============================================================================
@@ -29,6 +30,11 @@ import './LaundryLockerBindingTab.css';
 // - Strictly zero emojis across all UI states and feedback messages
 // ==============================================================================
 export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
+  const auth = useAuth();
+  const user = auth?.user;
+  const operatorId = user?.id || user?.operatorId || null;
+  const operatorName = user?.name || 'Operator';
+
   // Machine ID input (e.g. SLL-12901 or SLL-61209)
   const [stationIdInput, setStationIdInput] = useState('');
   const [stationName, setStationName] = useState('');
@@ -59,7 +65,7 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
   const loadFleet = useCallback(async () => {
     setIsLoadingFleet(true);
     try {
-      const stations = await fetchLockerStations();
+      const stations = await fetchLockerStations(operatorId);
       if (Array.isArray(stations)) {
         setFleetStations(stations);
       }
@@ -68,7 +74,7 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
     } finally {
       setIsLoadingFleet(false);
     }
-  }, []);
+  }, [operatorId]);
 
   useEffect(() => {
     loadFleet();
@@ -192,6 +198,9 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
         stationName: nameToUse,
         address: addressToUse,
         branchTag: branchTag,
+        totalDoors: (inspectedStation && inspectedStation.totalDoors) || 4,
+        operatorId: operatorId || 1,
+        operatorName: operatorName || 'Carlos Test',
       });
 
       const assignedCode = res.data?.pairing_code || '849201';
@@ -475,7 +484,7 @@ export function LaundryLockerBindingTab({ onNavigateToMonitoring }) {
                     <span className="fleet-station-code">{st.id}</span>
                     <span
                       className={
-                        st.binding_status === 'BOUND_ACTIVE' || st.status === 'online'
+                        st.binding_status === 'BOUND_ACTIVE'
                           ? 'binding-badge binding-badge-emerald'
                           : 'binding-badge binding-badge-amber'
                       }
