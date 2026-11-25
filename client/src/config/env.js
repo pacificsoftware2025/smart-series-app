@@ -1,4 +1,4 @@
 export const ENV = {
-  apiBaseUrl: 'http://localhost:5000/api',
+  apiBaseUrl: 'https://smart-laundry-locker-api.onrender.com/api',
   stationId: 'SLL-31690',
 };
