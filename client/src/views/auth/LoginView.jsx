@@ -4,9 +4,7 @@ import {
   Building2, 
   Truck, 
   AlertCircle,
-  Loader2,
-  Eye,
-  EyeOff
+  Loader2 
 } from 'lucide-react';
 import kioskIllustration from '../../assets/images/smartbox-kiosk-illustration.jpg';
 import './LoginView.css';
@@ -21,81 +19,45 @@ export function LoginView() {
   const auth = useAuth();
   const loginOperatorWithApi = auth.loginOperatorWithApi;
   const registerOperatorWithApi = auth.registerOperatorWithApi;
-  const loginAsRider = auth.loginAsRider;
+  const loginRiderWithApi = auth.loginRiderWithApi;
+  const registerRiderWithApi = auth.registerRiderWithApi;
 
   // Active role selector: 'operator' | 'rider'
+  // useState acts like `let selectedRole = 'operator'` in Vanilla JS,
+  // re-rendering the form automatically when the user switches portals.
   const [selectedRole, setSelectedRole] = useState('operator');
 
   // Mode: 'signin' | 'signup'
   const [authMode, setAuthMode] = useState('signin');
 
-  // Form Fields (all left blank by default so only placeholders appear)
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Form Fields
+  const [email, setEmail] = useState('juan@smartlocker.ph');
+  const [password, setPassword] = useState('yourPassword123');
   const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+639171234567');
+  const [vehiclePlate, setVehiclePlate] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Toggle password visibility handlers
-  function handleToggleShowPassword() {
-    if (showPassword) {
-      setShowPassword(false);
-    } else {
-      setShowPassword(true);
-    }
-  }
-
-  function handleToggleShowConfirmPassword() {
-    if (showConfirmPassword) {
-      setShowConfirmPassword(false);
-    } else {
-      setShowConfirmPassword(true);
-    }
-  }
-
-  function getPasswordInputType() {
-    if (showPassword) {
-      return 'text';
-    }
-    return 'password';
-  }
-
-  function getConfirmPasswordInputType() {
-    if (showConfirmPassword) {
-      return 'text';
-    }
-    return 'password';
-  }
 
   // Role toggle handlers
   function handleSelectOperatorRole() {
     setSelectedRole('operator');
     setErrorMsg('');
+    if (email === 'marco@grabngobar.store') {
+      setEmail('juan@smartlocker.ph');
+      setPassword('yourPassword123');
+    }
   }
 
   function handleSelectRiderRole() {
     setSelectedRole('rider');
     setErrorMsg('');
-  }
-
-  // Mode switch handlers
-  function handleSwitchToSignUp() {
-    setAuthMode('signup');
-    setErrorMsg('');
-    setPassword('');
-    setConfirmPassword('');
-  }
-
-  function handleSwitchToSignIn() {
-    setAuthMode('signin');
-    setErrorMsg('');
-    setPassword('');
-    setConfirmPassword('');
+    if (email === 'juan@smartlocker.ph' || email === 'elena@grabngobar.store') {
+      setEmail('marco@grabngobar.store');
+      setPassword('rider2026');
+    }
   }
 
   // Submit Handler
@@ -131,16 +93,14 @@ export function LoginView() {
 
     setErrorMsg('');
 
-    // Operator Authentication: Real Backend API endpoints (only for operators)
+    // Operator Authentication: Real Backend API endpoints (/api/auth/login & /api/auth/register)
     if (selectedRole === 'operator') {
       setIsSubmitting(true);
       try {
         if (authMode === 'signin') {
-          // Endpoint 2: POST /api/auth/login
           await loginOperatorWithApi(email.trim(), password);
         } else {
-          // Endpoint 1: POST /api/auth/register
-          let phoneToSubmit = '';
+          let phoneToSubmit = '+639171234567';
           if (phone && phone.trim() !== '') {
             phoneToSubmit = phone.trim();
           }
@@ -164,12 +124,38 @@ export function LoginView() {
       return;
     }
 
-    // Rider Authentication: Direct field ops access
-    let displayName = 'Marco Valdes';
-    if (authMode === 'signup' && fullName.trim() !== '') {
-      displayName = fullName.trim();
+    // Rider Authentication: Real Backend API endpoints (/api/auth/rider/login & /api/auth/rider/register)
+    setIsSubmitting(true);
+    try {
+      if (authMode === 'signin') {
+        await loginRiderWithApi(email.trim(), password);
+      } else {
+        let riderPhone = '';
+        if (phone && phone.trim() !== '') {
+          riderPhone = phone.trim();
+        }
+        let riderVehicle = '';
+        if (vehiclePlate && vehiclePlate.trim() !== '') {
+          riderVehicle = vehiclePlate.trim();
+        }
+        await registerRiderWithApi({
+          name: fullName.trim(),
+          email: email.trim(),
+          phone: riderPhone,
+          password: password,
+          vehiclePlate: riderVehicle,
+        });
+      }
+    } catch (err) {
+      let riderErrMsg = 'Rider authentication failed';
+      if (err && err.message) {
+        riderErrMsg = err.message;
+      }
+      setErrorMsg(riderErrMsg);
+      setIsSubmitting(false);
+      return;
     }
-    loginAsRider(displayName, 'Van #04 (Route Metro)');
+    setIsSubmitting(false);
   }
 
   // Helper functions replacing ternary operators
@@ -282,7 +268,7 @@ export function LoginView() {
                   type="text"
                   value={fullName}
                   onChange={function (e) { setFullName(e.target.value); }}
-                  placeholder="Full Name"
+                  placeholder="Full Name (e.g. Juan Dela Cruz)"
                   className="ref-text-input"
                   required
                 />
@@ -295,69 +281,64 @@ export function LoginView() {
                 type="email"
                 value={email}
                 onChange={function (e) { setEmail(e.target.value); }}
-                placeholder="Email"
+                placeholder="Work email address"
                 className="ref-text-input"
                 autoComplete="email"
                 required
               />
             </div>
 
-            {/* Operator Sign Up: Additional Phone Field */}
-            {authMode === 'signup' && selectedRole === 'operator' && (
+            {/* Sign Up: Phone Number Field (for both Operator and Rider) */}
+            {authMode === 'signup' && (
               <div className="ref-input-group">
                 <input
                   type="tel"
                   value={phone}
                   onChange={function (e) { setPhone(e.target.value); }}
-                  placeholder="Phone Number"
+                  placeholder="Phone number (+639171234567)"
                   className="ref-text-input"
                 />
               </div>
             )}
 
-            {/* Password Field with Show/Hide Toggle */}
-            <div className="ref-input-group ref-password-group">
+            {/* Rider Sign Up: Assigned Van / Vehicle Plate Field */}
+            {authMode === 'signup' && selectedRole === 'rider' && (
+              <div className="ref-input-group">
+                <input
+                  type="text"
+                  value={vehiclePlate}
+                  onChange={function (e) { setVehiclePlate(e.target.value); }}
+                  placeholder="Van / Vehicle Plate (e.g. Van #04 or ABC-1234)"
+                  className="ref-text-input"
+                />
+              </div>
+            )}
+
+            {/* Password Field */}
+            <div className="ref-input-group">
               <input
-                type={getPasswordInputType()}
+                type="password"
                 value={password}
                 onChange={function (e) { setPassword(e.target.value); }}
                 placeholder="Password"
-                className="ref-text-input ref-password-input"
+                className="ref-text-input"
                 autoComplete="current-password"
                 required
               />
-              <button
-                type="button"
-                onClick={handleToggleShowPassword}
-                className="ref-password-toggle-btn"
-                aria-label="Toggle password visibility"
-              >
-                {showPassword && <EyeOff size={18} />}
-                {!showPassword && <Eye size={18} />}
-              </button>
             </div>
 
-            {/* Sign Up Confirm Password Field with Show/Hide Toggle */}
+            {/* Sign Up Confirm Password Field */}
             {authMode === 'signup' && (
-              <div className="ref-input-group ref-password-group">
+              <div className="ref-input-group">
                 <input
-                  type={getConfirmPasswordInputType()}
+                  type="password"
                   value={confirmPassword}
                   onChange={function (e) { setConfirmPassword(e.target.value); }}
                   placeholder="Confirm Password"
-                  className="ref-text-input ref-password-input"
+                  className="ref-text-input"
                   autoComplete="new-password"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={handleToggleShowConfirmPassword}
-                  className="ref-password-toggle-btn"
-                  aria-label="Toggle confirm password visibility"
-                >
-                  {showConfirmPassword && <EyeOff size={18} />}
-                  {!showConfirmPassword && <Eye size={18} />}
-                </button>
               </div>
             )}
 
@@ -405,7 +386,7 @@ export function LoginView() {
                   Don't have an account?{' '}
                   <button
                     type="button"
-                    onClick={handleSwitchToSignUp}
+                    onClick={function () { setAuthMode('signup'); setErrorMsg(''); }}
                     className="ref-switch-link"
                   >
                     Sign Up
@@ -418,7 +399,7 @@ export function LoginView() {
                   Already have an account?{' '}
                   <button
                     type="button"
-                    onClick={handleSwitchToSignIn}
+                    onClick={function () { setAuthMode('signin'); setErrorMsg(''); }}
                     className="ref-switch-link"
                   >
                     Sign In

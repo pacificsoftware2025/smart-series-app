@@ -4,7 +4,10 @@ import {
   createDropoffOrder, 
   loginOperator, 
   registerOperator, 
-  fetchCurrentOperatorProfile 
+  fetchCurrentOperatorProfile,
+  loginRider,
+  registerRider,
+  fetchCurrentRiderProfile
 } from '../services/api';
 
 // ==============================================================================
@@ -121,6 +124,8 @@ export function AuthProvider(props) {
   function logout() {
     localStorage.removeItem('sll_operator_token');
     localStorage.removeItem('sll_operator_profile');
+    localStorage.removeItem('sll_rider_token');
+    localStorage.removeItem('sll_rider_profile');
     setUser(null);
     setActiveOrder(null);
   }
@@ -249,72 +254,162 @@ export function AuthProvider(props) {
     return data;
   }
 
-  // Check Session / Current User Profile on load (GET /api/auth/me)
+  // Helper that maps a verified Rider API record into AuthContext state
+  function applyRiderSessionState(rider, token) {
+    let riderName = 'Rider';
+    if (rider && rider.name) {
+      riderName = rider.name;
+    }
+
+    let initials = 'RD';
+    const parts = riderName.trim().split(' ');
+    if (parts.length >= 2) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (riderName.length >= 2) {
+      initials = riderName.substring(0, 2).toUpperCase();
+    }
+
+    let vanToUse = 'Assigned Fleet Van';
+    if (rider && rider.vehiclePlate) {
+      vanToUse = rider.vehiclePlate;
+    }
+
+    let routeToUse = 'Metro Central Route';
+    if (rider && rider.assignedRoute) {
+      routeToUse = rider.assignedRoute;
+    }
+
+    let emailToUse = '';
+    if (rider && rider.email) {
+      emailToUse = rider.email;
+    }
+
+    let phoneToUse = '';
+    if (rider && rider.phone) {
+      phoneToUse = rider.phone;
+    }
+
+    let riderId = null;
+    if (rider && rider.id) {
+      riderId = rider.id;
+    }
+
+    let statusToUse = 'active';
+    if (rider && rider.status) {
+      statusToUse = rider.status;
+    }
+
+    setUser({
+      id: riderId,
+      riderId: riderId,
+      name: riderName,
+      initials: initials,
+      email: emailToUse,
+      phone: phoneToUse,
+      role: ROLES.RIDER,
+      van: vanToUse,
+      vehiclePlate: vanToUse,
+      location: routeToUse,
+      status: statusToUse,
+      token: token,
+    });
+  }
+
+  // Authenticates a Rider via Backend API (POST /api/auth/rider/login)
+  async function loginRiderWithApi(email, password) {
+    const data = await loginRider(email, password);
+    applyRiderSessionState(data.rider, data.token);
+    return data;
+  }
+
+  // Registers a new Rider via Backend API (POST /api/auth/rider/register)
+  async function registerRiderWithApi(params) {
+    const data = await registerRider(params);
+    applyRiderSessionState(data.rider, data.token);
+    return data;
+  }
+
+  // useEffect with `[]` runs once when the app loads (like `DOMContentLoaded` in Vanilla JS)
+  // to restore either an active Operator session or an active Rider session from localStorage.
   useEffect(function () {
-    async function restoreOperatorSession() {
-      const savedToken = localStorage.getItem('sll_operator_token');
-      if (!savedToken) {
-        return;
-      }
-      try {
-        const operator = await fetchCurrentOperatorProfile(savedToken);
-        if (operator && operator.id) {
-          let opName = 'Operator';
-          if (operator.name) {
-            opName = operator.name;
-          }
+    async function restoreSavedSession() {
+      const savedOperatorToken = localStorage.getItem('sll_operator_token');
+      if (savedOperatorToken) {
+        try {
+          const operator = await fetchCurrentOperatorProfile(savedOperatorToken);
+          if (operator && operator.id) {
+            let opName = 'Operator';
+            if (operator.name) {
+              opName = operator.name;
+            }
 
-          let initials = 'OP';
-          const parts = opName.trim().split(' ');
-          if (parts.length >= 2) {
-            initials = (parts[0][0] + parts[1][0]).toUpperCase();
-          } else if (opName.length >= 2) {
-            initials = opName.substring(0, 2).toUpperCase();
-          }
+            let initials = 'OP';
+            const parts = opName.trim().split(' ');
+            if (parts.length >= 2) {
+              initials = (parts[0][0] + parts[1][0]).toUpperCase();
+            } else if (opName.length >= 2) {
+              initials = opName.substring(0, 2).toUpperCase();
+            }
 
-          let stationToUse = '';
-          if (operator.lockerStationId) {
-            stationToUse = operator.lockerStationId;
-          }
+            let stationToUse = '';
+            if (operator.lockerStationId) {
+              stationToUse = operator.lockerStationId;
+            }
 
-          let emailToUse = '';
-          if (operator.email) {
-            emailToUse = operator.email;
-          }
+            let emailToUse = '';
+            if (operator.email) {
+              emailToUse = operator.email;
+            }
 
-          let phoneToUse = '';
-          if (operator.phone) {
-            phoneToUse = operator.phone;
-          }
+            let phoneToUse = '';
+            if (operator.phone) {
+              phoneToUse = operator.phone;
+            }
 
-          let statusToUse = 'active';
-          if (operator.status) {
-            statusToUse = operator.status;
-          }
+            let statusToUse = 'active';
+            if (operator.status) {
+              statusToUse = operator.status;
+            }
 
-          setUser({
-            id: operator.id,
-            operatorId: operator.id,
-            name: opName,
-            initials: initials,
-            email: emailToUse,
-            phone: phoneToUse,
-            role: ROLES.OPERATOR,
-            station: stationToUse,
-            lockerStationId: stationToUse,
-            status: statusToUse,
-            token: savedToken,
-            location: 'Central Laundry Facility',
-          });
-        } else {
+            setUser({
+              id: operator.id,
+              operatorId: operator.id,
+              name: opName,
+              initials: initials,
+              email: emailToUse,
+              phone: phoneToUse,
+              role: ROLES.OPERATOR,
+              station: stationToUse,
+              lockerStationId: stationToUse,
+              status: statusToUse,
+              token: savedOperatorToken,
+              location: 'Central Laundry Facility',
+            });
+            return;
+          }
           localStorage.removeItem('sll_operator_token');
           localStorage.removeItem('sll_operator_profile');
+        } catch (err) {
+          console.warn('[AuthContext] Operator session restore skipped:', err);
         }
-      } catch (err) {
-        console.warn('[AuthContext] Session restore skipped:', err);
+      }
+
+      const savedRiderToken = localStorage.getItem('sll_rider_token');
+      if (savedRiderToken) {
+        try {
+          const rider = await fetchCurrentRiderProfile(savedRiderToken);
+          if (rider && rider.id) {
+            applyRiderSessionState(rider, savedRiderToken);
+            return;
+          }
+          localStorage.removeItem('sll_rider_token');
+          localStorage.removeItem('sll_rider_profile');
+        } catch (err) {
+          console.warn('[AuthContext] Rider session restore skipped:', err);
+        }
       }
     }
-    restoreOperatorSession();
+    restoreSavedSession();
   }, []);
 
   // Logs in as Delivery Driver / Field Ops Route Rider
@@ -503,6 +598,8 @@ export function AuthProvider(props) {
     loginAsCustomer: loginAsCustomer,
     signupCustomer: signupCustomer,
     loginAsRider: loginAsRider,
+    loginRiderWithApi: loginRiderWithApi,
+    registerRiderWithApi: registerRiderWithApi,
     loginAsOperator: loginAsOperator,
     loginOperatorWithApi: loginOperatorWithApi,
     registerOperatorWithApi: registerOperatorWithApi,

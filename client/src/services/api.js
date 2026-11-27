@@ -272,6 +272,8 @@ export async function loginOperator(email, password) {
   }
 
   if (data && data.token) {
+    localStorage.removeItem('sll_rider_token');
+    localStorage.removeItem('sll_rider_profile');
     localStorage.setItem('sll_operator_token', data.token);
     if (data.operator) {
       localStorage.setItem('sll_operator_profile', JSON.stringify(data.operator));
@@ -326,6 +328,8 @@ export async function registerOperator(params) {
   }
 
   if (data && data.token) {
+    localStorage.removeItem('sll_rider_token');
+    localStorage.removeItem('sll_rider_profile');
     localStorage.setItem('sll_operator_token', data.token);
     if (data.operator) {
       localStorage.setItem('sll_operator_profile', JSON.stringify(data.operator));
@@ -392,4 +396,147 @@ export async function fetchAllOperators() {
 export const loginOperatorApi = loginOperator;
 export const registerOperatorApi = registerOperator;
 export const fetchCurrentOperatorApi = fetchCurrentOperatorProfile;
+
+// ==============================================================================
+// RIDER / DRIVER AUTHENTICATION SERVICES
+// ==============================================================================
+
+/**
+ * Rider Login Endpoint
+ * Route: POST /api/auth/rider/login
+ * Body: { email, password }
+ * Response: { success: true, message: "Rider login successful", rider, token }
+ */
+export async function loginRider(email, password) {
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/auth/rider/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password }),
+    });
+  } catch (netErr) {
+    throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+  }
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (parseErr) {
+    data = {};
+  }
+
+  if (!res.ok) {
+    let errorMsg = 'Invalid email or password';
+    if (data && data.message) {
+      errorMsg = data.message;
+    } else {
+      errorMsg = 'HTTP ' + res.status + ' Rider login failed';
+    }
+    throw new Error(errorMsg);
+  }
+
+  if (data && data.token) {
+    localStorage.removeItem('sll_operator_token');
+    localStorage.removeItem('sll_operator_profile');
+    localStorage.setItem('sll_rider_token', data.token);
+    if (data.rider) {
+      localStorage.setItem('sll_rider_profile', JSON.stringify(data.rider));
+    }
+  }
+  return data;
+}
+
+/**
+ * Rider Sign Up Endpoint
+ * Route: POST /api/auth/rider/register
+ * Body: { name, email, phone, password, vehiclePlate, assignedRoute }
+ * Response: { success: true, message: "Rider registered successfully", rider, token }
+ */
+export async function registerRider(params) {
+  const name = params.name;
+  const email = params.email;
+  const phone = params.phone;
+  const password = params.password;
+  const vehiclePlate = params.vehiclePlate;
+  const assignedRoute = params.assignedRoute;
+
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/auth/rider/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        phone: phone,
+        password: password,
+        vehiclePlate: vehiclePlate,
+        assignedRoute: assignedRoute,
+      }),
+    });
+  } catch (netErr) {
+    throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+  }
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (parseErr) {
+    data = {};
+  }
+
+  if (!res.ok) {
+    let errorMsg = 'Rider registration failed';
+    if (data && data.message) {
+      errorMsg = data.message;
+    } else {
+      errorMsg = 'HTTP ' + res.status + ' Rider registration failed';
+    }
+    throw new Error(errorMsg);
+  }
+
+  if (data && data.token) {
+    localStorage.removeItem('sll_operator_token');
+    localStorage.removeItem('sll_operator_profile');
+    localStorage.setItem('sll_rider_token', data.token);
+    if (data.rider) {
+      localStorage.setItem('sll_rider_profile', JSON.stringify(data.rider));
+    }
+  }
+  return data;
+}
+
+/**
+ * Check Current Rider Session Profile
+ * Route: GET /api/auth/rider/me
+ * Header: Authorization: Bearer <token>
+ * Response: { success: true, rider: { ... } }
+ */
+export async function fetchCurrentRiderProfile(tokenOverride) {
+  let token = tokenOverride;
+  if (!token) {
+    token = localStorage.getItem('sll_rider_token');
+  }
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/auth/rider/me`, {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!res.ok) {
+      return null;
+    }
+    const data = await res.json();
+    if (data && data.rider) {
+      return data.rider;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[API] Failed to fetch rider session:', err);
+    return null;
+  }
+}
 
